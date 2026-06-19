@@ -39,8 +39,8 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
           parse_mode: "HTML",
           reply_markup: reportKeyboard(lang),
         });
-      } catch (e: any) {
-        if (!e?.message?.includes("message is not modified")) {
+      } catch (e: unknown) {
+        if (!(e instanceof Error && e.message.includes("message is not modified"))) {
           logger.error({ err: e }, "report editMessageText error");
         }
       }

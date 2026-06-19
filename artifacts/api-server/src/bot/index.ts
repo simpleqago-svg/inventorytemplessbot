@@ -29,9 +29,9 @@ export function createBot(): Telegraf {
 
   // Admin text middleware must run BEFORE inventory's bot.on("text")
   bot.use(async (ctx, next) => {
-    if (ctx.updateType !== "message") return next();
-    const msg = (ctx as any).message;
-    if (!msg || !("text" in msg)) return next();
+    if (!("message" in ctx.update)) return next();
+    const msg = ctx.update.message;
+    if (!("text" in msg)) return next();
 
     const userId = ctx.from?.id;
     if (!userId) return next();

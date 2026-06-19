@@ -1,4 +1,5 @@
 import { Telegraf, Context, Telegram } from "telegraf";
+type EditExtra = Parameters<Telegram["editMessageText"]>[4];
 import { logger } from "../../lib/logger.js";
 import { t, getLang } from "../i18n.js";
 import {
@@ -434,8 +435,8 @@ export async function handleAdminText(
 
   const lang = getLang(user.lang);
 
-  const edit = async (msg: string, opts?: object) => {
-    await telegram.editMessageText(waiting.chatId, waiting.messageId, undefined, msg, opts as any);
+  const edit = async (msg: string, opts?: EditExtra) => {
+    await telegram.editMessageText(waiting.chatId, waiting.messageId, undefined, msg, opts);
   };
 
   switch (waiting.type) {
