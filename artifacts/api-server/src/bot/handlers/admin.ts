@@ -196,7 +196,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!cat) { await ctx.answerCbQuery(); return; }
       const catName = lang === "sr" ? cat.nameSr : cat.nameEn;
       await ctx.editMessageText(t[lang].confirmDeleteCategory(catName), {
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
         reply_markup: confirmDeleteKeyboard(lang, `admin:del_cat_confirm:${categoryId}`),
       });
       await ctx.answerCbQuery();
@@ -271,7 +271,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!prod) { await ctx.answerCbQuery(); return; }
       const prodName = lang === "sr" ? prod.nameSr : prod.nameEn;
       await ctx.editMessageText(t[lang].confirmDeleteProduct(prodName), {
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
         reply_markup: confirmDeleteKeyboard(lang, `admin:del_prod_confirm:${productId}`),
       });
       await ctx.answerCbQuery();

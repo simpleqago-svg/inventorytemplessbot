@@ -33,15 +33,17 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
       const locationName = lang === "sr" ? location.nameSr : location.nameEn;
       const text = await buildReportText(session.id, username, locationName, lang);
 
+      await ctx.answerCbQuery();
       try {
         await ctx.editMessageText(text, {
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
           reply_markup: reportKeyboard(lang),
         });
       } catch (e: any) {
-        if (!e?.message?.includes("message is not modified")) throw e;
+        if (!e?.message?.includes("message is not modified")) {
+          logger.error({ err: e }, "report editMessageText error");
+        }
       }
-      await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "report action error");
       try { await ctx.answerCbQuery(); } catch {}
@@ -75,7 +77,7 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
 
       const channelId = process.env["TELEGRAM_CHANNEL_ID"];
       if (channelId) {
-        await ctx.telegram.sendMessage(channelId, text, { parse_mode: "Markdown" });
+        await ctx.telegram.sendMessage(channelId, text, { parse_mode: "HTML" });
       }
 
       await closeSession(session.id);

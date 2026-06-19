@@ -35,7 +35,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const filled = await getFilledProductIds(session.id);
 
       await ctx.editMessageText(t[lang].categoryHeader, {
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
         reply_markup: productsKeyboard(products, filled, lang),
       });
       await ctx.answerCbQuery();
@@ -62,7 +62,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
 
       if (product.measurementType === "color") {
         await ctx.editMessageText(t[lang].chooseColor(pName), {
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
           reply_markup: colorKeyboard(lang, productId),
         });
       } else {
@@ -80,7 +80,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
           chatId,
         });
         await ctx.editMessageText(t[lang].enterQuantity(pName, product.unit ?? ""), {
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
         });
       }
       await ctx.answerCbQuery();
@@ -115,7 +115,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const products = await getProductsByCategory(product.categoryId);
       const filled = await getFilledProductIds(session.id);
       await ctx.editMessageText(t[lang].categoryHeader, {
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
         reply_markup: productsKeyboard(products, filled, lang),
       });
       await ctx.answerCbQuery();
@@ -141,7 +141,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const products = await getProductsByCategory(product.categoryId);
       const filled = await getFilledProductIds(session.id);
       await ctx.editMessageText(t[lang].categoryHeader, {
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
         reply_markup: productsKeyboard(products, filled, lang),
       });
       await ctx.answerCbQuery();
@@ -208,7 +208,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
             waiting.messageId,
             undefined,
             t[lang].invalidNumber,
-            { parse_mode: "Markdown" }
+            { parse_mode: "HTML" }
           );
         } catch {}
         return;
@@ -232,7 +232,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
             undefined,
             t[lang].categoryHeader,
             {
-              parse_mode: "Markdown",
+              parse_mode: "HTML",
               reply_markup: productsKeyboard(products, filled, lang),
             }
           );
@@ -246,7 +246,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
             undefined,
             t[lang].chooseColor(waiting.productName),
             {
-              parse_mode: "Markdown",
+              parse_mode: "HTML",
               reply_markup: colorKeyboard(lang, waiting.productId),
             }
           );

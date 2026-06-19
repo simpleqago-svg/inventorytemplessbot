@@ -3,7 +3,6 @@ import {
   categoriesTable,
   productsTable,
   inventoryRecordsTable,
-  type InventoryRecord,
   type Product,
   type Category,
 } from "@workspace/db";
@@ -16,6 +15,13 @@ const COLOR_EMOJI: Record<string, string> = {
   red: "🔴",
 };
 
+function esc(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export async function buildReportText(
   sessionId: number,
   username: string,
@@ -23,12 +29,13 @@ export async function buildReportText(
   lang: Lang
 ): Promise<string> {
   const now = new Date();
-  const date = `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const date = `${dd}.${mm}.${yyyy}`;
 
-  const header =
-    lang === "sr"
-      ? `📋 *Izveštaj o inventaru*\n👤 ${username}\n📍 ${locationName}\n📅 ${date}`
-      : `📋 *Inventory Report*\n👤 ${username}\n📍 ${locationName}\n📅 ${date}`;
+  const title = lang === "sr" ? "Izveštaj o inventaru" : "Inventory Report";
+  const header = `📋 <b>${esc(title)}</b>\n👤 ${esc(username)}\n📍 ${esc(locationName)}\n📅 ${date}`;
 
   const records = await db
     .select()
@@ -36,21 +43,11 @@ export async function buildReportText(
     .where(eq(inventoryRecordsTable.sessionId, sessionId));
 
   if (records.length === 0) {
-    return `${header}\n\n_${lang === "sr" ? "Nema unetih stavki." : "No items recorded yet."}_`;
+    const empty = lang === "sr" ? "Nema unetih stavki." : "No items recorded yet.";
+    return `${header}\n\n<i>${esc(empty)}</i>`;
   }
 
   const productIds = [...new Set(records.map((r) => r.productId))];
-  const products = await db
-    .select()
-    .from(productsTable)
-    .where(
-      productIds.length === 1
-        ? eq(productsTable.id, productIds[0]!)
-        : // multiple — fetch all and filter in memory
-          eq(productsTable.id, productIds[0]!)
-    );
-
-  // Fetch all products for the session
   const allProducts: Product[] = [];
   for (const pid of productIds) {
     const rows = await db
@@ -61,14 +58,7 @@ export async function buildReportText(
     if (rows[0]) allProducts.push(rows[0]);
   }
 
-  const productMap = new Map<number, Product>(
-    allProducts.map((p) => [p.id, p])
-  );
-
-  // Group by category
-  const categoryIds = [
-    ...new Set(allProducts.map((p) => p.categoryId)),
-  ];
+  const categoryIds = [...new Set(allProducts.map((p) => p.categoryId))];
   const categories: Category[] = [];
   for (const cid of categoryIds) {
     const rows = await db
@@ -79,9 +69,7 @@ export async function buildReportText(
     if (rows[0]) categories.push(rows[0]);
   }
 
-  const recordMap = new Map<number, InventoryRecord>(
-    records.map((r) => [r.productId, r])
-  );
+  const recordMap = new Map(records.map((r) => [r.productId, r]));
 
   const sections: string[] = [];
   for (const cat of categories) {
@@ -90,29 +78,25 @@ export async function buildReportText(
     for (const prod of catProducts) {
       const rec = recordMap.get(prod.id);
       if (!rec) continue;
-      const name = lang === "sr" ? prod.nameSr : prod.nameEn;
+      const name = esc(lang === "sr" ? prod.nameSr : prod.nameEn);
       let value = "";
       if (prod.measurementType === "numeric") {
-        value = `${rec.valNumeric ?? "—"} ${prod.unit ?? ""}`.trim();
+        value = `${rec.valNumeric ?? "—"} ${esc(prod.unit ?? "")}`.trim();
       } else if (prod.measurementType === "color") {
-        value = rec.valColor ? COLOR_EMOJI[rec.valColor] ?? "—" : "—";
+        value = rec.valColor ? (COLOR_EMOJI[rec.valColor] ?? "—") : "—";
       } else {
-        const num = rec.valNumeric !== null ? `${rec.valNumeric} ${prod.unit ?? ""}`.trim() : "—";
-        const col = rec.valColor ? COLOR_EMOJI[rec.valColor] ?? "—" : "—";
+        const num = rec.valNumeric !== null ? `${rec.valNumeric} ${esc(prod.unit ?? "")}`.trim() : "—";
+        const col = rec.valColor ? (COLOR_EMOJI[rec.valColor] ?? "—") : "—";
         value = `${num} ${col}`;
       }
       lines.push(`  • ${name}: ${value}`);
     }
     if (lines.length > 0) {
-      const catName = lang === "sr" ? cat.nameSr : cat.nameEn;
-      sections.push(`*${catName}*\n${lines.join("\n")}`);
+      const catName = esc(lang === "sr" ? cat.nameSr : cat.nameEn);
+      sections.push(`<b>${catName}</b>\n${lines.join("\n")}`);
     }
   }
 
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yyyy = now.getFullYear();
   const hashtag = `#report_${dd}_${mm}_${yyyy}`;
-
   return `${header}\n\n${sections.join("\n\n")}\n\n${hashtag}`;
 }

@@ -49,7 +49,7 @@ export async function goToCategories(
   const locationName = lang === "sr" ? location.nameSr : location.nameEn;
   const text = t[lang].mainMenu(locationName);
   const opts = {
-    parse_mode: "Markdown" as const,
+    parse_mode: "HTML" as const,
     reply_markup: categoriesKeyboard(categories, lang, stats),
   };
 
