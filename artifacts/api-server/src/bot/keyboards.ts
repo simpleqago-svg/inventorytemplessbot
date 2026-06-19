@@ -107,13 +107,75 @@ export function settingsKeyboard(lang: Lang, isAdmin: boolean): InlineKeyboardMa
     [{ text: t[lang].changeLanguage, callback_data: "settings:lang" }],
   ];
   if (isAdmin) {
-    rows.push([{ text: t[lang].addCategory, callback_data: "admin:add_cat" }]);
-    rows.push([{ text: t[lang].addProduct, callback_data: "admin:add_prod" }]);
+    rows.push([
+      { text: t[lang].addCategory, callback_data: "admin:add_cat" },
+      { text: t[lang].addProduct, callback_data: "admin:add_prod" },
+    ]);
+    rows.push([
+      { text: t[lang].deleteCategory, callback_data: "admin:del_cat" },
+      { text: t[lang].deleteProduct, callback_data: "admin:del_prod" },
+    ]);
     rows.push([{ text: t[lang].addLocation, callback_data: "admin:add_loc" }]);
     rows.push([{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }]);
   }
   rows.push([{ text: t[lang].toCategories, callback_data: "cats" }]);
   return { inline_keyboard: rows };
+}
+
+export function deleteCategoryKeyboard(
+  categories: Category[],
+  lang: Lang
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...categories.map((c) => [
+        { text: name(c, lang), callback_data: `admin:del_cat_ask:${c.id}` },
+      ]),
+      [{ text: t[lang].deleteNo, callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function deleteProductCategoryKeyboard(
+  categories: Category[],
+  lang: Lang
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...categories.map((c) => [
+        { text: name(c, lang), callback_data: `admin:del_prod_cat:${c.id}` },
+      ]),
+      [{ text: t[lang].deleteNo, callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function deleteProductKeyboard(
+  products: Product[],
+  lang: Lang
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...products.map((p) => [
+        { text: name(p, lang), callback_data: `admin:del_prod_ask:${p.id}` },
+      ]),
+      [{ text: t[lang].deleteNo, callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function confirmDeleteKeyboard(
+  lang: Lang,
+  confirmCb: string
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        { text: t[lang].deleteYes, callback_data: confirmCb },
+        { text: t[lang].deleteNo, callback_data: "admin:cancel" },
+      ],
+    ],
+  };
 }
 
 export function adminKeyboard(lang: Lang): InlineKeyboardMarkup {

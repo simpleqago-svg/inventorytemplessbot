@@ -306,3 +306,35 @@ export async function setUserAdmin(
     .set({ isAdmin })
     .where(eq(usersTable.id, userId));
 }
+
+export async function getCategoryById(
+  id: number
+): Promise<Category | undefined> {
+  const rows = await db
+    .select()
+    .from(categoriesTable)
+    .where(eq(categoriesTable.id, id))
+    .limit(1);
+  return rows[0];
+}
+
+export async function deleteCategory(categoryId: number): Promise<void> {
+  const products = await db
+    .select({ id: productsTable.id })
+    .from(productsTable)
+    .where(eq(productsTable.categoryId, categoryId));
+  for (const p of products) {
+    await db
+      .delete(inventoryRecordsTable)
+      .where(eq(inventoryRecordsTable.productId, p.id));
+  }
+  await db.delete(productsTable).where(eq(productsTable.categoryId, categoryId));
+  await db.delete(categoriesTable).where(eq(categoriesTable.id, categoryId));
+}
+
+export async function deleteProduct(productId: number): Promise<void> {
+  await db
+    .delete(inventoryRecordsTable)
+    .where(eq(inventoryRecordsTable.productId, productId));
+  await db.delete(productsTable).where(eq(productsTable.id, productId));
+}

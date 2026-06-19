@@ -6,15 +6,24 @@ import {
   adminCategoryKeyboard,
   adminTypeKeyboard,
   settingsKeyboard,
+  deleteCategoryKeyboard,
+  deleteProductCategoryKeyboard,
+  deleteProductKeyboard,
+  confirmDeleteKeyboard,
 } from "../keyboards.js";
 import {
   getUser,
   getCategories,
+  getProductsByCategory,
   addCategory,
   addProduct,
   addLocation,
   getUserByUsername,
   setUserAdmin,
+  getCategoryById,
+  getProduct,
+  deleteCategory,
+  deleteProduct,
 } from "../db.js";
 import { setWaiting, getWaiting, clearWaiting } from "../state.js";
 
@@ -31,12 +40,15 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
         return;
       }
       clearWaiting(userId);
-      await ctx.reply(t[lang].adminMenu, { reply_markup: adminKeyboard(lang) });
+      await ctx.reply(t[lang].settingsMenu, {
+        reply_markup: settingsKeyboard(lang, true),
+      });
     } catch (err) {
       logger.error({ err }, "admin command error");
     }
   });
 
+  // ── Add category ──────────────────────────────────────────────────────────
   bot.action("admin:add_cat", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -52,6 +64,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
   });
 
+  // ── Add product ───────────────────────────────────────────────────────────
   bot.action("admin:add_prod", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -69,6 +82,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
   });
 
+  // ── Add location ──────────────────────────────────────────────────────────
   bot.action("admin:add_loc", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -117,7 +131,9 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (mType === "color") {
         await addProduct(waiting.categoryId, waiting.nameEn, waiting.nameSr, "color", null);
         clearWaiting(userId);
-        await ctx.editMessageText(t[lang].productSaved, { reply_markup: adminKeyboard(lang) });
+        await ctx.editMessageText(t[lang].productSaved, {
+          reply_markup: settingsKeyboard(lang, true),
+        });
       } else {
         setWaiting(userId, {
           type: "admin_prod_unit",
@@ -150,6 +166,139 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
   });
 
+  // ── Delete category ───────────────────────────────────────────────────────
+  bot.action("admin:del_cat", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categories = await getCategories();
+      await ctx.editMessageText(t[lang].deleteCategory + ":", {
+        reply_markup: deleteCategoryKeyboard(categories, lang),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:del_cat error");
+    }
+  });
+
+  bot.action(/^admin:del_cat_ask:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categoryId = parseInt(ctx.match[1]!);
+      const cat = await getCategoryById(categoryId);
+      if (!cat) { await ctx.answerCbQuery(); return; }
+      const catName = lang === "sr" ? cat.nameSr : cat.nameEn;
+      await ctx.editMessageText(t[lang].confirmDeleteCategory(catName), {
+        parse_mode: "Markdown",
+        reply_markup: confirmDeleteKeyboard(lang, `admin:del_cat_confirm:${categoryId}`),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:del_cat_ask error");
+    }
+  });
+
+  bot.action(/^admin:del_cat_confirm:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categoryId = parseInt(ctx.match[1]!);
+      await deleteCategory(categoryId);
+      await ctx.answerCbQuery(t[lang].categoryDeleted);
+      await ctx.editMessageText(t[lang].settingsMenu, {
+        reply_markup: settingsKeyboard(lang, true),
+      });
+    } catch (err) {
+      logger.error({ err }, "admin:del_cat_confirm error");
+    }
+  });
+
+  // ── Delete product ────────────────────────────────────────────────────────
+  bot.action("admin:del_prod", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categories = await getCategories();
+      await ctx.editMessageText(t[lang].deleteProduct + ":", {
+        reply_markup: deleteProductCategoryKeyboard(categories, lang),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:del_prod error");
+    }
+  });
+
+  bot.action(/^admin:del_prod_cat:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categoryId = parseInt(ctx.match[1]!);
+      const products = await getProductsByCategory(categoryId);
+      await ctx.editMessageText(t[lang].chooseProductToDelete, {
+        reply_markup: deleteProductKeyboard(products, lang),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:del_prod_cat error");
+    }
+  });
+
+  bot.action(/^admin:del_prod_ask:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const productId = parseInt(ctx.match[1]!);
+      const prod = await getProduct(productId);
+      if (!prod) { await ctx.answerCbQuery(); return; }
+      const prodName = lang === "sr" ? prod.nameSr : prod.nameEn;
+      await ctx.editMessageText(t[lang].confirmDeleteProduct(prodName), {
+        parse_mode: "Markdown",
+        reply_markup: confirmDeleteKeyboard(lang, `admin:del_prod_confirm:${productId}`),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:del_prod_ask error");
+    }
+  });
+
+  bot.action(/^admin:del_prod_confirm:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const productId = parseInt(ctx.match[1]!);
+      await deleteProduct(productId);
+      await ctx.answerCbQuery(t[lang].productDeleted);
+      await ctx.editMessageText(t[lang].settingsMenu, {
+        reply_markup: settingsKeyboard(lang, true),
+      });
+    } catch (err) {
+      logger.error({ err }, "admin:del_prod_confirm error");
+    }
+  });
+
+  // ── Assign admin ──────────────────────────────────────────────────────────
   bot.action("settings:assign_admin", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -193,7 +342,11 @@ export async function handleAdminText(
       return true;
     }
     case "admin_prod_name_en": {
-      setWaiting(userId, { type: "admin_prod_name_sr", categoryId: waiting.categoryId, nameEn: text });
+      setWaiting(userId, {
+        type: "admin_prod_name_sr",
+        categoryId: waiting.categoryId,
+        nameEn: text,
+      });
       await replyFn(t[lang].enterProductNameSr);
       return true;
     }
