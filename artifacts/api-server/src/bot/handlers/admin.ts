@@ -6,7 +6,7 @@ import {
   adminCategoryKeyboard,
   adminTypeKeyboard,
 } from "../keyboards.js";
-import { getUser, getCategories, addCategory, addProduct } from "../db.js";
+import { getUser, getCategories, addCategory, addProduct, addLocation } from "../db.js";
 import { setWaiting, getWaiting, clearWaiting } from "../state.js";
 
 export function registerAdminHandlers(bot: Telegraf<Context>) {
@@ -59,6 +59,21 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
   });
 
+  bot.action("admin:add_loc", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      setWaiting(userId, { type: "admin_loc_name_en" });
+      await ctx.editMessageText(t[lang].enterLocationNameEn);
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:add_loc error");
+    }
+  });
+
   bot.action(/^admin:cat_pick:(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -75,7 +90,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Called after nameSr is collected — show type selection
   bot.action(/^admin:type:(color|numeric|both)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -93,9 +107,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (mType === "color") {
         await addProduct(waiting.categoryId, waiting.nameEn, waiting.nameSr, "color", null);
         clearWaiting(userId);
-        await ctx.editMessageText(t[lang].productSaved, {
-          reply_markup: adminKeyboard(lang),
-        });
+        await ctx.editMessageText(t[lang].productSaved, { reply_markup: adminKeyboard(lang) });
       } else {
         setWaiting(userId, {
           type: "admin_prod_unit",
@@ -119,9 +131,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       clearWaiting(userId);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      await ctx.editMessageText(t[lang].adminMenu, {
-        reply_markup: adminKeyboard(lang),
-      });
+      await ctx.editMessageText(t[lang].adminMenu, { reply_markup: adminKeyboard(lang) });
       await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "admin:cancel error");
@@ -184,6 +194,17 @@ export async function handleAdminText(
       );
       clearWaiting(userId);
       await replyFn(t[lang].productSaved);
+      return true;
+    }
+    case "admin_loc_name_en": {
+      setWaiting(userId, { type: "admin_loc_name_sr", nameEn: text });
+      await replyFn(t[lang].enterLocationNameSr);
+      return true;
+    }
+    case "admin_loc_name_sr": {
+      await addLocation(waiting.nameEn, text);
+      clearWaiting(userId);
+      await replyFn(t[lang].locationSaved);
       return true;
     }
     default:

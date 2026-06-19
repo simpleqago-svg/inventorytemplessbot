@@ -6,7 +6,9 @@ export type WaitingStep =
   | { type: "admin_prod_name_en"; categoryId: number }
   | { type: "admin_prod_name_sr"; categoryId: number; nameEn: string }
   | { type: "admin_prod_choose_type"; categoryId: number; nameEn: string; nameSr: string }
-  | { type: "admin_prod_unit"; categoryId: number; nameEn: string; nameSr: string; measurementType: "numeric" | "both" };
+  | { type: "admin_prod_unit"; categoryId: number; nameEn: string; nameSr: string; measurementType: "numeric" | "both" }
+  | { type: "admin_loc_name_en" }
+  | { type: "admin_loc_name_sr"; nameEn: string };
 
 const waiting = new Map<number, WaitingStep>();
 

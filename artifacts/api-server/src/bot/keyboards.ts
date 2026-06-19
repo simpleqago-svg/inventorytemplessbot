@@ -91,6 +91,7 @@ export function adminKeyboard(lang: Lang): InlineKeyboardMarkup {
     inline_keyboard: [
       [{ text: t[lang].addCategory, callback_data: "admin:add_cat" }],
       [{ text: t[lang].addProduct, callback_data: "admin:add_prod" }],
+      [{ text: t[lang].addLocation, callback_data: "admin:add_loc" }],
       [{ text: t[lang].cancelAdmin, callback_data: "admin:cancel" }],
     ],
   };

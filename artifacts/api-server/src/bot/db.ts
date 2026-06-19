@@ -235,3 +235,14 @@ export async function getLocationById(
     .limit(1);
   return rows[0];
 }
+
+export async function addLocation(
+  nameEn: string,
+  nameSr: string
+): Promise<Location> {
+  const [loc] = await db
+    .insert(locationsTable)
+    .values({ nameEn, nameSr })
+    .returning();
+  return loc!;
+}
