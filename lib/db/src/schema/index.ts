@@ -29,7 +29,7 @@ export const colorValueEnum = pgEnum("color_value", [
 export const usersTable = pgTable("users", {
   id: bigint("id", { mode: "number" }).primaryKey(),
   username: text("username"),
-  lang: langEnum("lang").notNull().default("sr"),
+  lang: langEnum("lang"),
   isAdmin: boolean("is_admin").notNull().default(false),
 });
 
