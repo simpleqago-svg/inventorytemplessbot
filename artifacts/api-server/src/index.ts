@@ -1,5 +1,6 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
+import { createBot } from "./bot/index.js";
 
 const rawPort = process.env["PORT"];
 
@@ -20,6 +21,20 @@ app.listen(port, (err) => {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
-
   logger.info({ port }, "Server listening");
 });
+
+// Start the Telegram bot in polling mode
+try {
+  const bot = createBot();
+  bot.launch().then(() => {
+    logger.info("Telegram bot started (polling)");
+  }).catch((err) => {
+    logger.error({ err }, "Failed to start Telegram bot");
+  });
+
+  process.once("SIGINT", () => bot.stop("SIGINT"));
+  process.once("SIGTERM", () => bot.stop("SIGTERM"));
+} catch (err) {
+  logger.error({ err }, "Bot initialization error");
+}
