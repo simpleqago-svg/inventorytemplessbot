@@ -13,6 +13,7 @@ export const t = {
     resetDone: "✅ Report has been reset.",
     toCategories: "⬅️ To Categories",
     back: "⬅️ Back",
+    categoryHeader: "📦 *Category*",
     enterQuantity: (name: string, unit: string) =>
       `Enter quantity for *${name}* (${unit}):`,
     chooseColor: (name: string) => `Choose status for *${name}*:`,
@@ -62,6 +63,7 @@ export const t = {
     resetDone: "✅ Izveštaj je poništen.",
     toCategories: "⬅️ Ka kategorijama",
     back: "⬅️ Nazad",
+    categoryHeader: "📦 *Kategorija*",
     enterQuantity: (name: string, unit: string) =>
       `Unesite količinu za *${name}* (${unit}):`,
     chooseColor: (name: string) => `Izaberite status za *${name}*:`,

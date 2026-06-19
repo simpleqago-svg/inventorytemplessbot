@@ -16,23 +16,44 @@ interface SeedCategory {
   nameSr: string;
   type: MeasurementType;
   unit?: string;
-  products: string[];
+  products: { en: string; sr: string }[];
 }
 
 const seedData: SeedCategory[] = [
   {
-    nameEn: "Bottled drinks",
+    nameEn: "Bottled Drinks",
     nameSr: "Flasirana pica",
     type: "color",
     products: [
-      "Aloe", "Sveps", "Vino belo", "Vino crveno", "Coca cola", "Coca cola zero",
-      "Kombuha Natural", "Kombuha Cherry", "Kombuha Zova", "Tonic three cents",
-      "Rosa", "Knjaz milos", "Granini jabuka", "Granini jagoda", "Granini narandza",
-      "Granini Peach", "Ledeni caj Lavanada", "Ledeni caj Slipak",
-      "SP Aranciata 0,2", "SP Aranciata 0,33", "SP Aranciata",
-      "SP Aranciata Rossa Zero 330ml", "SP gazirana voda 0,25",
-      "SP Limonata 0,33", "SP Limonata Zero 0,33", "SP Limun Menta 350ml",
-      "SP Melograno Arancia 0,33", "SP Oak Tonic 200ml", "SP Tonic Citrus 0,2",
+      { en: "Aloe", sr: "Aloe" },
+      { en: "Schweppes", sr: "Sveps" },
+      { en: "White Wine", sr: "Vino belo" },
+      { en: "Red Wine", sr: "Vino crveno" },
+      { en: "Coca Cola", sr: "Coca cola" },
+      { en: "Coca Cola Zero", sr: "Coca cola zero" },
+      { en: "Kombucha Natural", sr: "Kombuha Natural" },
+      { en: "Kombucha Cherry", sr: "Kombuha Cherry" },
+      { en: "Kombucha Elderflower", sr: "Kombuha Zova" },
+      { en: "Three Cents Tonic", sr: "Tonic three cents" },
+      { en: "Rosa Water", sr: "Rosa" },
+      { en: "Knjaz Milos Water", sr: "Knjaz milos" },
+      { en: "Granini Apple", sr: "Granini jabuka" },
+      { en: "Granini Strawberry", sr: "Granini jagoda" },
+      { en: "Granini Orange", sr: "Granini narandza" },
+      { en: "Granini Peach", sr: "Granini Peach" },
+      { en: "Lavender Iced Tea", sr: "Ledeni caj Lavanada" },
+      { en: "Rosehip Iced Tea", sr: "Ledeni caj Slipak" },
+      { en: "SP Aranciata 0.2", sr: "SP Aranciata 0,2" },
+      { en: "SP Aranciata 0.33", sr: "SP Aranciata 0,33" },
+      { en: "SP Aranciata", sr: "SP Aranciata" },
+      { en: "SP Aranciata Rossa Zero 330ml", sr: "SP Aranciata Rossa Zero 330ml" },
+      { en: "SP Sparkling Water 0.25", sr: "SP gazirana voda 0,25" },
+      { en: "SP Limonata 0.33", sr: "SP Limonata 0,33" },
+      { en: "SP Limonata Zero 0.33", sr: "SP Limonata Zero 0,33" },
+      { en: "SP Lemon Mint 350ml", sr: "SP Limun Menta 350ml" },
+      { en: "SP Melograno Arancia 0.33", sr: "SP Melograno Arancia 0,33" },
+      { en: "SP Oak Tonic 200ml", sr: "SP Oak Tonic 200ml" },
+      { en: "SP Tonic Citrus 0.2", sr: "SP Tonic Citrus 0,2" },
     ],
   },
   {
@@ -40,7 +61,11 @@ const seedData: SeedCategory[] = [
     nameSr: "Mleko",
     type: "color",
     products: [
-      "Obicno mleko", "Ovseno mleko", "Kokos mleko", "Vanila mleko", "Pavlaka za kuvanje",
+      { en: "Regular Milk", sr: "Obicno mleko" },
+      { en: "Oat Milk", sr: "Ovseno mleko" },
+      { en: "Coconut Milk", sr: "Kokos mleko" },
+      { en: "Vanilla Milk", sr: "Vanila mleko" },
+      { en: "Cooking Cream", sr: "Pavlaka za kuvanje" },
     ],
   },
   {
@@ -49,45 +74,74 @@ const seedData: SeedCategory[] = [
     type: "numeric",
     unit: "pcs",
     products: [
-      "Brazil 200gr", "Kenya 200gr", "Costa Rica 200gr", "Brazil", "Decaf",
-      "Costa Rica", "Kenya",
+      { en: "Brazil 200g", sr: "Brazil 200gr" },
+      { en: "Kenya 200g", sr: "Kenya 200gr" },
+      { en: "Costa Rica 200g", sr: "Costa Rica 200gr" },
+      { en: "Brazil", sr: "Brazil" },
+      { en: "Decaf", sr: "Decaf" },
+      { en: "Costa Rica", sr: "Costa Rica" },
+      { en: "Kenya", sr: "Kenya" },
     ],
   },
   {
-    nameEn: "Paper goods",
+    nameEn: "Paper Products",
     nameSr: "Papirna galanterija",
     type: "numeric",
     unit: "pcs",
-    products: ["Vc papir", "Ubrusi", "Salvete"],
-  },
-  {
-    nameEn: "Receipt rolls",
-    nameSr: "Rolne za racune",
-    type: "numeric",
-    unit: "pcs",
-    products: ["Papir za Terminal", "Papir za Kasu"],
-  },
-  {
-    nameEn: "Cleaning supplies",
-    nameSr: "Hemija i potrosni materijal",
-    type: "color",
     products: [
-      "Kese za smece velike", "Kese za smece male", "Detardzent za sudove",
-      "Sapun za ruke", "Sapun za ruke za goste", "Sredstvo za pranje podova",
-      "Sredstvo za stakla", "Rukavice", "Krema za ruke", "Krpe za poliranje",
+      { en: "Toilet Paper", sr: "Vc papir" },
+      { en: "Paper Towels", sr: "Ubrusi" },
+      { en: "Napkins", sr: "Salvete" },
     ],
   },
   {
-    nameEn: "To go",
+    nameEn: "Receipt Rolls",
+    nameSr: "Rolne za racune",
+    type: "numeric",
+    unit: "pcs",
+    products: [
+      { en: "Terminal Receipt Paper", sr: "Papir za Terminal" },
+      { en: "POS Receipt Paper", sr: "Papir za Kasu" },
+    ],
+  },
+  {
+    nameEn: "Chemicals & Supplies",
+    nameSr: "Hemija i potrosni materijal",
+    type: "color",
+    products: [
+      { en: "Large Trash Bags", sr: "Kese za smece velike" },
+      { en: "Small Trash Bags", sr: "Kese za smece male" },
+      { en: "Dish Soap", sr: "Detardzent za sudove" },
+      { en: "Hand Soap", sr: "Sapun za ruke" },
+      { en: "Guest Hand Soap", sr: "Sapun za ruke za goste" },
+      { en: "Floor Cleaner", sr: "Sredstvo za pranje podova" },
+      { en: "Glass Cleaner", sr: "Sredstvo za stakla" },
+      { en: "Gloves", sr: "Rukavice" },
+      { en: "Hand Cream", sr: "Krema za ruke" },
+      { en: "Polishing Cloths", sr: "Krpe za poliranje" },
+    ],
+  },
+  {
+    nameEn: "To Go",
     nameSr: "To go",
     type: "numeric",
     unit: "pcs",
     products: [
-      "Case L", "Case M", "Case S", "Plasticne case L", "Plasticne case S",
-      "Poklopac za papirne case L", "Poklopac za papirne case M",
-      "Poklopac za papirne case S", "Poklopac za plasticne case",
-      "To go kutije", "To go poklopci", "Nosaci za case", "Slamcice",
-      "Drvene Kasike", "Drvene Viljuske",
+      { en: "Paper Cups L", sr: "Case L" },
+      { en: "Paper Cups M", sr: "Case M" },
+      { en: "Paper Cups S", sr: "Case S" },
+      { en: "Plastic Cups L", sr: "Plasticne case L" },
+      { en: "Plastic Cups S", sr: "Plasticne case S" },
+      { en: "Lids for Paper Cups L", sr: "Poklopac za papirne case L" },
+      { en: "Lids for Paper Cups M", sr: "Poklopac za papirne case M" },
+      { en: "Lids for Paper Cups S", sr: "Poklopac za papirne case S" },
+      { en: "Lids for Plastic Cups", sr: "Poklopac za plasticne case" },
+      { en: "To Go Boxes", sr: "To go kutije" },
+      { en: "To Go Lids", sr: "To go poklopci" },
+      { en: "Cup Holders", sr: "Nosaci za case" },
+      { en: "Straws", sr: "Slamcice" },
+      { en: "Wooden Spoons", sr: "Drvene Kasike" },
+      { en: "Wooden Forks", sr: "Drvene Viljuske" },
     ],
   },
   {
@@ -96,8 +150,17 @@ const seedData: SeedCategory[] = [
     type: "numeric",
     unit: "pcs",
     products: [
-      "Crni caj", "Rooibos", "Earl grey", "Zeleni caj", "Bai mu dan",
-      "Fruit mix", "Jasmin", "Oolong", "Rice Pu erh", "Yoga", "Yunnan",
+      { en: "Black Tea", sr: "Crni caj" },
+      { en: "Rooibos", sr: "Rooibos" },
+      { en: "Earl Grey", sr: "Earl grey" },
+      { en: "Green Tea", sr: "Zeleni caj" },
+      { en: "Bai Mu Dan", sr: "Bai mu dan" },
+      { en: "Fruit Mix", sr: "Fruit mix" },
+      { en: "Jasmine", sr: "Jasmin" },
+      { en: "Oolong", sr: "Oolong" },
+      { en: "Rice Pu-erh", sr: "Rice Pu erh" },
+      { en: "Yoga", sr: "Yoga" },
+      { en: "Yunnan", sr: "Yunnan" },
     ],
   },
   {
@@ -105,14 +168,20 @@ const seedData: SeedCategory[] = [
     nameSr: "Matcha",
     type: "numeric",
     unit: "pcs",
-    products: ["Matcha", "Plava matcha"],
+    products: [
+      { en: "Matcha", sr: "Matcha" },
+      { en: "Blue Matcha", sr: "Plava matcha" },
+    ],
   },
   {
-    nameEn: "Fruit",
+    nameEn: "Fruits",
     nameSr: "Voce",
     type: "numeric",
     unit: "kg",
-    products: ["Narandze", "Lime"],
+    products: [
+      { en: "Oranges", sr: "Narandze" },
+      { en: "Lime", sr: "Lime" },
+    ],
   },
   {
     nameEn: "Ingredients",
@@ -120,21 +189,48 @@ const seedData: SeedCategory[] = [
     type: "numeric",
     unit: "pcs",
     products: [
-      "Kakao", "Cimet", "Cili", "Vanila secer", "Beli secer", "Secer za goste",
-      "Cokolada", "Sladoled", "So", "Acid", "Smrznute jagode", "Sumsko voce", "Lesnik",
+      { en: "Cocoa", sr: "Kakao" },
+      { en: "Cinnamon", sr: "Cimet" },
+      { en: "Chili", sr: "Cili" },
+      { en: "Vanilla Sugar", sr: "Vanila secer" },
+      { en: "White Sugar", sr: "Beli secer" },
+      { en: "Guest Sugar", sr: "Secer za goste" },
+      { en: "Chocolate", sr: "Cokolada" },
+      { en: "Ice Cream", sr: "Sladoled" },
+      { en: "Salt", sr: "So" },
+      { en: "Acid", sr: "Acid" },
+      { en: "Frozen Strawberries", sr: "Smrznute jagode" },
+      { en: "Mixed Berries", sr: "Sumsko voce" },
+      { en: "Hazelnut", sr: "Lesnik" },
     ],
   },
   {
-    nameEn: "Purees and syrups",
+    nameEn: "Purees & Syrups",
     nameSr: "Pire i sirupi",
     type: "numeric",
     unit: "pcs",
     products: [
-      "Pire banana", "Pire borovnica", "Pire breskva", "Pire jagoda",
-      "Pire Mango", "Pire Ananas", "Sirup Estragon", "Sirup Ruza",
-      "Sirup Orhideja", "Sirup javor", "Sirup vanila", "Sirup jagoda",
-      "Sirup Lesnik", "Sirup karamela", "Sirup cokolada", "Sirup bela cokolada",
-      "Sirup pistaci", "Sirup kokos", "Sirup visnja", "Sirup zova", "Sirup Nana",
+      { en: "Banana Puree", sr: "Pire banana" },
+      { en: "Blueberry Puree", sr: "Pire borovnica" },
+      { en: "Peach Puree", sr: "Pire breskva" },
+      { en: "Strawberry Puree", sr: "Pire jagoda" },
+      { en: "Mango Puree", sr: "Pire Mango" },
+      { en: "Pineapple Puree", sr: "Pire Ananas" },
+      { en: "Tarragon Syrup", sr: "Sirup Estragon" },
+      { en: "Rose Syrup", sr: "Sirup Ruza" },
+      { en: "Orchid Syrup", sr: "Sirup Orhideja" },
+      { en: "Maple Syrup", sr: "Sirup javor" },
+      { en: "Vanilla Syrup", sr: "Sirup vanila" },
+      { en: "Strawberry Syrup", sr: "Sirup jagoda" },
+      { en: "Hazelnut Syrup", sr: "Sirup Lesnik" },
+      { en: "Caramel Syrup", sr: "Sirup karamela" },
+      { en: "Chocolate Syrup", sr: "Sirup cokolada" },
+      { en: "White Chocolate Syrup", sr: "Sirup bela cokolada" },
+      { en: "Pistachio Syrup", sr: "Sirup pistaci" },
+      { en: "Coconut Syrup", sr: "Sirup kokos" },
+      { en: "Cherry Syrup", sr: "Sirup visnja" },
+      { en: "Elderflower Syrup", sr: "Sirup zova" },
+      { en: "Mint Syrup", sr: "Sirup Nana" },
     ],
   },
   {
@@ -143,10 +239,22 @@ const seedData: SeedCategory[] = [
     type: "numeric",
     unit: "pcs",
     products: [
-      "Plava majica", "Bela majica", "V60 filteri", "AeroPress filteri",
-      "Aeropress maker", "Origami dripper", "V60 set", "Hairo coffee Bottle",
-      "Stenli", "Termos veliki", "Termos mali", "Bez solja", "Plava solja",
-      "Plava solja sa kaisem", "Longsleeve", "Duks",
+      { en: "Blue T-Shirt", sr: "Plava majica" },
+      { en: "White T-Shirt", sr: "Bela majica" },
+      { en: "V60 Filters", sr: "V60 filteri" },
+      { en: "AeroPress Filters", sr: "AeroPress filteri" },
+      { en: "AeroPress Maker", sr: "Aeropress maker" },
+      { en: "Origami Dripper", sr: "Origami dripper" },
+      { en: "V60 Set", sr: "V60 set" },
+      { en: "Hario Coffee Bottle", sr: "Hairo coffee Bottle" },
+      { en: "Stanley", sr: "Stenli" },
+      { en: "Large Thermos", sr: "Termos veliki" },
+      { en: "Small Thermos", sr: "Termos mali" },
+      { en: "Beige Mug", sr: "Bez solja" },
+      { en: "Blue Mug", sr: "Plava solja" },
+      { en: "Blue Mug with Strap", sr: "Plava solja sa kaisem" },
+      { en: "Longsleeve", sr: "Longsleeve" },
+      { en: "Hoodie", sr: "Duks" },
     ],
   },
 ];
@@ -154,13 +262,11 @@ const seedData: SeedCategory[] = [
 async function seed() {
   console.log("🌱 Seeding database...");
 
-  // Locations
   for (const loc of locations) {
     await db.insert(locationsTable).values(loc).onConflictDoNothing();
   }
   console.log(`✅ Locations: ${locations.length}`);
 
-  // Categories + Products
   let totalProducts = 0;
   for (const cat of seedData) {
     const [inserted] = await db
@@ -174,13 +280,13 @@ async function seed() {
       continue;
     }
 
-    for (const productName of cat.products) {
+    for (const p of cat.products) {
       await db
         .insert(productsTable)
         .values({
           categoryId: inserted.id,
-          nameEn: productName,
-          nameSr: productName,
+          nameEn: p.en,
+          nameSr: p.sr,
           measurementType: cat.type,
           unit: cat.unit ?? null,
         })

@@ -21,15 +21,19 @@ export function locationKeyboard(locations: Location[]): InlineKeyboardMarkup {
   };
 }
 
+function name(item: { nameEn: string; nameSr: string }, lang: Lang): string {
+  return lang === "sr" ? item.nameSr : item.nameEn;
+}
+
 export function categoriesKeyboard(
   categories: Category[],
   lang: Lang
 ): InlineKeyboardMarkup {
   const rows: { text: string; callback_data: string }[][] = [];
   for (let i = 0; i < categories.length; i += 2) {
-    const row = [{ text: categories[i]!.nameSr, callback_data: `cat:${categories[i]!.id}` }];
+    const row = [{ text: name(categories[i]!, lang), callback_data: `cat:${categories[i]!.id}` }];
     if (categories[i + 1]) {
-      row.push({ text: categories[i + 1]!.nameSr, callback_data: `cat:${categories[i + 1]!.id}` });
+      row.push({ text: name(categories[i + 1]!, lang), callback_data: `cat:${categories[i + 1]!.id}` });
     }
     rows.push(row);
   }
@@ -45,7 +49,7 @@ export function productsKeyboard(
 ): InlineKeyboardMarkup {
   const rows = products.map((p) => {
     const check = filledIds.has(p.id) ? "✅ " : "";
-    return [{ text: `${check}${p.nameSr}`, callback_data: `prod:${p.id}` }];
+    return [{ text: `${check}${name(p, lang)}`, callback_data: `prod:${p.id}` }];
   });
   rows.push([
     { text: t[lang].toCategories, callback_data: "cats" },

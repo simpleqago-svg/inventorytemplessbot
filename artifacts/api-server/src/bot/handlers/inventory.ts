@@ -38,7 +38,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       // Store current category in user state for back navigation
       (ctx as any).__categoryId = categoryId;
 
-      await ctx.editMessageText(`📦 *Kategorija*`, {
+      await ctx.editMessageText(t[lang].categoryHeader, {
         parse_mode: "Markdown",
         reply_markup: productsKeyboard(products, filled, lang),
       });
@@ -138,7 +138,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       if (!product) { await ctx.answerCbQuery(); return; }
       const products = await getProductsByCategory(product.categoryId);
       const filled = await getFilledProductIds(session.id);
-      await ctx.editMessageText(`📦 *Kategorija*`, {
+      await ctx.editMessageText(t[lang].categoryHeader, {
         parse_mode: "Markdown",
         reply_markup: productsKeyboard(products, filled, lang),
       });
@@ -165,7 +165,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       if (!product) { await ctx.answerCbQuery(); return; }
       const products = await getProductsByCategory(product.categoryId);
       const filled = await getFilledProductIds(session.id);
-      await ctx.editMessageText(`📦 *Kategorija*`, {
+      await ctx.editMessageText(t[lang].categoryHeader, {
         parse_mode: "Markdown",
         reply_markup: productsKeyboard(products, filled, lang),
       });
@@ -264,7 +264,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
             waiting.chatId,
             waiting.messageId,
             undefined,
-            `📦 *Kategorija*`,
+            t[lang].categoryHeader,
             {
               parse_mode: "Markdown",
               reply_markup: productsKeyboard(products, filled, lang),
