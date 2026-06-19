@@ -63,7 +63,7 @@ export async function goToCategories(
 async function goToLocationPicker(ctx: Context, lang: "en" | "sr", edit: boolean) {
   const locations = await getLocations();
   const text = t[lang].chooseLocation;
-  const opts = { reply_markup: locationKeyboard(locations) };
+  const opts = { reply_markup: locationKeyboard(locations, lang) };
   if (edit) {
     await ctx.editMessageText(text, opts);
   } else {
@@ -92,7 +92,7 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
       if (locations.length === 1) {
         await goToCategories(ctx, tgUser.id, locations[0]!.id, false);
       } else {
-        await ctx.reply(t[lang].chooseLocation, { reply_markup: locationKeyboard(locations) });
+        await ctx.reply(t[lang].chooseLocation, { reply_markup: locationKeyboard(locations, lang) });
       }
     } catch (err) {
       logger.error({ err }, "start command error");

@@ -13,10 +13,10 @@ export function langKeyboard(): InlineKeyboardMarkup {
   };
 }
 
-export function locationKeyboard(locations: Location[]): InlineKeyboardMarkup {
+export function locationKeyboard(locations: Location[], lang: Lang = "sr"): InlineKeyboardMarkup {
   return {
     inline_keyboard: locations.map((l) => [
-      { text: l.nameSr, callback_data: `loc:${l.id}` },
+      { text: name(l, lang), callback_data: `loc:${l.id}` },
     ]),
   };
 }
@@ -197,11 +197,11 @@ export function adminKeyboard(lang: Lang): InlineKeyboardMarkup {
   };
 }
 
-export function adminCategoryKeyboard(categories: Category[]): InlineKeyboardMarkup {
+export function adminCategoryKeyboard(categories: Category[], lang: Lang = "sr"): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       ...categories.map((c) => [
-        { text: c.nameSr, callback_data: `admin:cat_pick:${c.id}` },
+        { text: name(c, lang), callback_data: `admin:cat_pick:${c.id}` },
       ]),
       [{ text: "❌", callback_data: "admin:cancel" }],
     ],
@@ -219,11 +219,11 @@ export function adminTypeKeyboard(lang: Lang): InlineKeyboardMarkup {
   };
 }
 
-export function editProductTypeCategoryKeyboard(categories: Category[]): InlineKeyboardMarkup {
+export function editProductTypeCategoryKeyboard(categories: Category[], lang: Lang = "sr"): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       ...categories.map((c) => [
-        { text: c.nameSr, callback_data: `admin:edit_pt_cat:${c.id}` },
+        { text: name(c, lang), callback_data: `admin:edit_pt_cat:${c.id}` },
       ]),
       [{ text: "❌", callback_data: "admin:cancel" }],
     ],

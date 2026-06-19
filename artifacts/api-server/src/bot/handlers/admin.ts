@@ -80,7 +80,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].chooseCategory, {
-        reply_markup: adminCategoryKeyboard(categories),
+        reply_markup: adminCategoryKeyboard(categories, lang),
       });
       await ctx.answerCbQuery();
     } catch (err) {
@@ -341,7 +341,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].chooseCategory, {
-        reply_markup: editProductTypeCategoryKeyboard(categories),
+        reply_markup: editProductTypeCategoryKeyboard(categories, lang),
       });
       await ctx.answerCbQuery();
     } catch (err) {
