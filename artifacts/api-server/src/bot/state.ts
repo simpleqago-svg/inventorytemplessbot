@@ -8,7 +8,8 @@ export type WaitingStep =
   | { type: "admin_prod_choose_type"; categoryId: number; nameEn: string; nameSr: string }
   | { type: "admin_prod_unit"; categoryId: number; nameEn: string; nameSr: string; measurementType: "numeric" | "both" }
   | { type: "admin_loc_name_en" }
-  | { type: "admin_loc_name_sr"; nameEn: string };
+  | { type: "admin_loc_name_sr"; nameEn: string }
+  | { type: "admin_assign_username" };
 
 const waiting = new Map<number, WaitingStep>();
 

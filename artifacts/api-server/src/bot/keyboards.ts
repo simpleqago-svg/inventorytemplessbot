@@ -27,17 +27,30 @@ function name(item: { nameEn: string; nameSr: string }, lang: Lang): string {
 
 export function categoriesKeyboard(
   categories: Category[],
-  lang: Lang
+  lang: Lang,
+  stats?: Map<number, { total: number; filled: number }>
 ): InlineKeyboardMarkup {
   const rows: { text: string; callback_data: string }[][] = [];
   for (let i = 0; i < categories.length; i += 2) {
-    const row = [{ text: name(categories[i]!, lang), callback_data: `cat:${categories[i]!.id}` }];
-    if (categories[i + 1]) {
-      row.push({ text: name(categories[i + 1]!, lang), callback_data: `cat:${categories[i + 1]!.id}` });
-    }
+    const buildBtn = (cat: Category) => {
+      let prefix = "";
+      if (stats) {
+        const s = stats.get(cat.id);
+        if (s && s.total > 0) {
+          if (s.filled === s.total) prefix = "✅ ";
+          else if (s.filled > 0) prefix = "⏸ ";
+        }
+      }
+      return { text: `${prefix}${name(cat, lang)}`, callback_data: `cat:${cat.id}` };
+    };
+    const row = [buildBtn(categories[i]!)];
+    if (categories[i + 1]) row.push(buildBtn(categories[i + 1]!));
     rows.push(row);
   }
-  rows.push([{ text: t[lang].viewReport, callback_data: "report" }]);
+  rows.push([
+    { text: t[lang].viewReport, callback_data: "report" },
+    { text: t[lang].settings, callback_data: "settings" },
+  ]);
   rows.push([{ text: t[lang].resetReport, callback_data: "reset_ask" }]);
   return { inline_keyboard: rows };
 }
@@ -85,9 +98,22 @@ export function reportKeyboard(lang: Lang): InlineKeyboardMarkup {
     inline_keyboard: [
       [{ text: t[lang].submit, callback_data: "submit" }],
       [{ text: t[lang].edit, callback_data: "cats" }],
-      [{ text: t[lang].back, callback_data: "cats" }],
     ],
   };
+}
+
+export function settingsKeyboard(lang: Lang, isAdmin: boolean): InlineKeyboardMarkup {
+  const rows: { text: string; callback_data: string }[][] = [
+    [{ text: t[lang].changeLanguage, callback_data: "settings:lang" }],
+  ];
+  if (isAdmin) {
+    rows.push([{ text: t[lang].addCategory, callback_data: "admin:add_cat" }]);
+    rows.push([{ text: t[lang].addProduct, callback_data: "admin:add_prod" }]);
+    rows.push([{ text: t[lang].addLocation, callback_data: "admin:add_loc" }]);
+    rows.push([{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }]);
+  }
+  rows.push([{ text: t[lang].toCategories, callback_data: "cats" }]);
+  return { inline_keyboard: rows };
 }
 
 export function adminKeyboard(lang: Lang): InlineKeyboardMarkup {
@@ -96,6 +122,7 @@ export function adminKeyboard(lang: Lang): InlineKeyboardMarkup {
       [{ text: t[lang].addCategory, callback_data: "admin:add_cat" }],
       [{ text: t[lang].addProduct, callback_data: "admin:add_prod" }],
       [{ text: t[lang].addLocation, callback_data: "admin:add_loc" }],
+      [{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }],
       [{ text: t[lang].cancelAdmin, callback_data: "admin:cancel" }],
     ],
   };

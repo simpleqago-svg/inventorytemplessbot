@@ -5,8 +5,17 @@ import {
   adminKeyboard,
   adminCategoryKeyboard,
   adminTypeKeyboard,
+  settingsKeyboard,
 } from "../keyboards.js";
-import { getUser, getCategories, addCategory, addProduct, addLocation } from "../db.js";
+import {
+  getUser,
+  getCategories,
+  addCategory,
+  addProduct,
+  addLocation,
+  getUserByUsername,
+  setUserAdmin,
+} from "../db.js";
 import { setWaiting, getWaiting, clearWaiting } from "../state.js";
 
 export function registerAdminHandlers(bot: Telegraf<Context>) {
@@ -16,6 +25,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
+      try { await ctx.deleteMessage(); } catch {}
       if (!user?.isAdmin) {
         await ctx.reply(t[lang].notAdmin);
         return;
@@ -131,18 +141,31 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       clearWaiting(userId);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      await ctx.editMessageText(t[lang].adminMenu, { reply_markup: adminKeyboard(lang) });
+      await ctx.editMessageText(t[lang].settingsMenu, {
+        reply_markup: settingsKeyboard(lang, user?.isAdmin ?? false),
+      });
       await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "admin:cancel error");
     }
   });
+
+  bot.action("settings:assign_admin", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      setWaiting(userId, { type: "admin_assign_username" });
+      await ctx.editMessageText(t[lang].enterAdminUsername);
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "settings:assign_admin error");
+    }
+  });
 }
 
-/**
- * Handle text messages from admins during multi-step flows.
- * Returns true if the message was consumed by admin flow.
- */
 export async function handleAdminText(
   _bot: Telegraf<Context>,
   userId: number,
@@ -205,6 +228,19 @@ export async function handleAdminText(
       await addLocation(waiting.nameEn, text);
       clearWaiting(userId);
       await replyFn(t[lang].locationSaved);
+      return true;
+    }
+    case "admin_assign_username": {
+      const target = await getUserByUsername(text);
+      if (!target) {
+        clearWaiting(userId);
+        await replyFn(t[lang].userNotFound);
+        return true;
+      }
+      await setUserAdmin(target.id, true);
+      clearWaiting(userId);
+      const uname = target.username ?? String(target.id);
+      await replyFn(t[lang].adminAssigned(uname));
       return true;
     }
     default:

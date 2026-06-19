@@ -17,10 +17,9 @@ import {
   resetSession,
 } from "../db.js";
 import { setWaiting, getWaiting, clearWaiting } from "../state.js";
-import { userLocation } from "./start.js";
+import { userLocation, resolveLocation, goToCategories } from "./start.js";
 
 export function registerInventoryHandlers(bot: Telegraf<Context>) {
-  // Category clicked → show products
   bot.action(/^cat:(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -28,15 +27,12 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const categoryId = parseInt(ctx.match[1]!);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const session = await getOrCreateSession(userId, locId);
       const products = await getProductsByCategory(categoryId);
       const filled = await getFilledProductIds(session.id);
-
-      // Store current category in user state for back navigation
-      (ctx as any).__categoryId = categoryId;
 
       await ctx.editMessageText(t[lang].categoryHeader, {
         parse_mode: "Markdown",
@@ -48,7 +44,6 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Product clicked
   bot.action(/^prod:(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -56,51 +51,35 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const productId = parseInt(ctx.match[1]!);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const session = await getOrCreateSession(userId, locId);
       const product = await getProduct(productId);
       if (!product) { await ctx.answerCbQuery(); return; }
 
-      const name = lang === "sr" ? product.nameSr : product.nameEn;
+      const pName = lang === "sr" ? product.nameSr : product.nameEn;
 
       if (product.measurementType === "color") {
-        await ctx.editMessageText(t[lang].chooseColor(name), {
+        await ctx.editMessageText(t[lang].chooseColor(pName), {
           parse_mode: "Markdown",
           reply_markup: colorKeyboard(lang, productId),
         });
-      } else if (product.measurementType === "numeric") {
-        const msgId = ctx.callbackQuery.message?.message_id;
-        const chatId = ctx.chat?.id;
-        if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
-        setWaiting(userId, {
-          type: "numeric",
-          sessionId: session.id,
-          productId,
-          productName: name,
-          unit: product.unit ?? "",
-          messageId: msgId,
-          chatId,
-        });
-        await ctx.editMessageText(t[lang].enterQuantity(name, product.unit ?? ""), {
-          parse_mode: "Markdown",
-        });
       } else {
-        // both
         const msgId = ctx.callbackQuery.message?.message_id;
         const chatId = ctx.chat?.id;
         if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+        const waitType = product.measurementType === "both" ? "numeric_then_color" : "numeric";
         setWaiting(userId, {
-          type: "numeric_then_color",
+          type: waitType,
           sessionId: session.id,
           productId,
-          productName: name,
+          productName: pName,
           unit: product.unit ?? "",
           messageId: msgId,
           chatId,
         });
-        await ctx.editMessageText(t[lang].enterQuantity(name, product.unit ?? ""), {
+        await ctx.editMessageText(t[lang].enterQuantity(pName, product.unit ?? ""), {
           parse_mode: "Markdown",
         });
       }
@@ -110,7 +89,6 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Color selection
   bot.action(/^color:(green|yellow|red):(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -119,21 +97,19 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const productId = parseInt(ctx.match[2]!);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const session = await getOrCreateSession(userId, locId);
       const waiting = getWaiting(userId);
 
-      if (waiting && (waiting.type === "numeric_then_color")) {
-        // Part 2 of "both": save numeric + color
+      if (waiting && waiting.type === "numeric_then_color") {
         await upsertRecord(waiting.sessionId, waiting.productId, null, color);
         clearWaiting(userId);
       } else {
         await upsertRecord(session.id, productId, null, color);
       }
 
-      // Return to products list for current category
       const product = await getProduct(productId);
       if (!product) { await ctx.answerCbQuery(); return; }
       const products = await getProductsByCategory(product.categoryId);
@@ -148,7 +124,6 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Back from color picker to category
   bot.action(/^cat_back:(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -157,7 +132,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       clearWaiting(userId);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const session = await getOrCreateSession(userId, locId);
@@ -175,7 +150,6 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Reset ask
   bot.action("reset_ask", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -191,7 +165,6 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Reset confirm
   bot.action("reset_confirm", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -199,18 +172,17 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       clearWaiting(userId);
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
       const session = await getSession(userId, locId);
       if (session) await resetSession(session.id);
-      await ctx.editMessageText(t[lang].resetDone);
-      await ctx.answerCbQuery();
+      await ctx.answerCbQuery(t[lang].resetDone);
+      await goToCategories(ctx, userId, locId, true);
     } catch (err) {
       logger.error({ err }, "reset_confirm error");
     }
   });
 
-  // Text message handler — captures numeric input
   bot.on("text", async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -218,10 +190,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const waiting = getWaiting(userId);
       if (!waiting) return;
 
-      if (
-        waiting.type !== "numeric" &&
-        waiting.type !== "numeric_then_color"
-      ) {
+      if (waiting.type !== "numeric" && waiting.type !== "numeric_then_color") {
         return;
       }
 
@@ -230,11 +199,9 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
       const text = ctx.message.text.trim().replace(",", ".");
       const value = parseFloat(text);
 
-      // Delete user's message to keep chat clean
       try { await ctx.deleteMessage(); } catch {}
 
       if (isNaN(value)) {
-        // Re-prompt
         try {
           await ctx.telegram.editMessageText(
             waiting.chatId,
@@ -251,10 +218,9 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
         await upsertRecord(waiting.sessionId, waiting.productId, value, null);
         clearWaiting(userId);
 
-        // Return to products list
         const product = await getProduct(waiting.productId);
         if (!product) return;
-        const locId = userLocation.get(userId);
+        const locId = await resolveLocation(userId);
         if (!locId) return;
         const session = await getOrCreateSession(userId, locId);
         const products = await getProductsByCategory(product.categoryId);
@@ -272,15 +238,7 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
           );
         } catch {}
       } else {
-        // numeric_then_color: save numeric part, then show color picker
-        // Store numeric value temporarily by updating waiting state
-        setWaiting(userId, {
-          ...waiting,
-          type: "numeric_then_color",
-        });
-        // We save numeric now, color will overwrite when color is picked
         await upsertRecord(waiting.sessionId, waiting.productId, value, null);
-
         try {
           await ctx.telegram.editMessageText(
             waiting.chatId,

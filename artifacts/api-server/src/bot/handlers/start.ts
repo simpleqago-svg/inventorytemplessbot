@@ -5,6 +5,7 @@ import {
   langKeyboard,
   locationKeyboard,
   categoriesKeyboard,
+  settingsKeyboard,
 } from "../keyboards.js";
 import {
   upsertUser,
@@ -14,13 +15,23 @@ import {
   getCategories,
   getOrCreateSession,
   getLocationById,
+  getActiveSessionLocation,
+  getCategoryStats,
 } from "../db.js";
 import { clearWaiting } from "../state.js";
 
-// Store per-user current location in memory
 export const userLocation = new Map<number, number>();
 
-async function goToCategories(
+async function resolveLocation(userId: number): Promise<number | undefined> {
+  let locId = userLocation.get(userId);
+  if (!locId) {
+    locId = await getActiveSessionLocation(userId);
+    if (locId) userLocation.set(userId, locId);
+  }
+  return locId;
+}
+
+export async function goToCategories(
   ctx: Context,
   userId: number,
   locationId: number,
@@ -32,10 +43,15 @@ async function goToCategories(
   if (!location) return;
 
   userLocation.set(userId, locationId);
-  await getOrCreateSession(userId, locationId);
+  const session = await getOrCreateSession(userId, locationId);
   const categories = await getCategories();
-  const text = t[lang].mainMenu(lang === "sr" ? location.nameSr : location.nameEn);
-  const opts = { parse_mode: "Markdown" as const, reply_markup: categoriesKeyboard(categories, lang) };
+  const stats = await getCategoryStats(session.id);
+  const locationName = lang === "sr" ? location.nameSr : location.nameEn;
+  const text = t[lang].mainMenu(locationName);
+  const opts = {
+    parse_mode: "Markdown" as const,
+    reply_markup: categoriesKeyboard(categories, lang, stats),
+  };
 
   if (edit) {
     await ctx.editMessageText(text, opts);
@@ -61,10 +77,12 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
       const tgUser = ctx.from;
       if (!tgUser) return;
       clearWaiting(tgUser.id);
+
+      try { await ctx.deleteMessage(); } catch {}
+
       const user = await upsertUser(tgUser.id, tgUser.username);
       const lang = getLang(user.lang);
 
-      // No language set yet — ask first
       if (!user.lang) {
         await ctx.reply(t[lang].chooseLanguage, { reply_markup: langKeyboard() });
         return;
@@ -81,7 +99,6 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  // Language selection
   bot.action(/^lang:(en|sr)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -95,30 +112,34 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
       } else {
         await goToLocationPicker(ctx, lang, true);
       }
+      await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "lang action error");
     }
   });
 
-  // Location selection (used when multiple locations exist)
   bot.action(/^loc:(\d+)$/, async (ctx) => {
     try {
       const userId = ctx.from?.id;
       if (!userId) return;
       const locationId = parseInt(ctx.match[1]!);
       await goToCategories(ctx, userId, locationId, true);
+      await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "loc action error");
     }
   });
 
-  // Back to categories
   bot.action("cats", async (ctx) => {
     try {
       const userId = ctx.from?.id;
       if (!userId) return;
       clearWaiting(userId);
-      const locId = userLocation.get(userId);
+      let locId = await resolveLocation(userId);
+      if (!locId) {
+        const locations = await getLocations();
+        if (locations.length === 1) locId = locations[0]!.id;
+      }
       if (!locId) { await ctx.answerCbQuery(); return; }
       await goToCategories(ctx, userId, locId, true);
       await ctx.answerCbQuery();
@@ -126,4 +147,36 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
       logger.error({ err }, "cats action error");
     }
   });
+
+  bot.action("settings", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      await ctx.editMessageText(t[lang].settingsMenu, {
+        reply_markup: settingsKeyboard(lang, user?.isAdmin ?? false),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "settings action error");
+    }
+  });
+
+  bot.action("settings:lang", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      await ctx.editMessageText(t[lang].chooseLanguage, {
+        reply_markup: langKeyboard(),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "settings:lang action error");
+    }
+  });
 }
+
+export { resolveLocation };

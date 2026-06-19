@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   usersTable,
@@ -245,4 +245,64 @@ export async function addLocation(
     .values({ nameEn, nameSr })
     .returning();
   return loc!;
+}
+
+export async function getActiveSessionLocation(
+  userId: number
+): Promise<number | undefined> {
+  const rows = await db
+    .select()
+    .from(activeSessionsTable)
+    .where(
+      and(
+        eq(activeSessionsTable.userId, userId),
+        eq(activeSessionsTable.status, "in_progress")
+      )
+    )
+    .limit(1);
+  return rows[0]?.locationId;
+}
+
+export async function getCategoryStats(
+  sessionId: number
+): Promise<Map<number, { total: number; filled: number }>> {
+  const records = await db
+    .select()
+    .from(inventoryRecordsTable)
+    .where(eq(inventoryRecordsTable.sessionId, sessionId));
+  const filledIds = new Set(records.map((r) => r.productId));
+
+  const products = await db
+    .select({ id: productsTable.id, categoryId: productsTable.categoryId })
+    .from(productsTable);
+
+  const stats = new Map<number, { total: number; filled: number }>();
+  for (const p of products) {
+    const s = stats.get(p.categoryId) ?? { total: 0, filled: 0 };
+    s.total++;
+    if (filledIds.has(p.id)) s.filled++;
+    stats.set(p.categoryId, s);
+  }
+  return stats;
+}
+
+export async function getUserByUsername(
+  username: string
+): Promise<User | undefined> {
+  const rows = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.username, username.replace(/^@/, "")))
+    .limit(1);
+  return rows[0];
+}
+
+export async function setUserAdmin(
+  userId: number,
+  isAdmin: boolean
+): Promise<void> {
+  await db
+    .update(usersTable)
+    .set({ isAdmin })
+    .where(eq(usersTable.id, userId));
 }

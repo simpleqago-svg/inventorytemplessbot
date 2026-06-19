@@ -19,10 +19,17 @@ export function createBot(): Telegraf {
   registerReportHandlers(bot);
   registerAdminHandlers(bot);
 
-  // Override the text handler in inventory to also handle admin text flows
-  // We need to intercept BEFORE inventory's text handler.
-  // Since inventory registers its own bot.on("text"), we add admin check here
-  // by hooking into the middleware chain first.
+  const adminTextTypes = [
+    "admin_cat_name_en",
+    "admin_cat_name_sr",
+    "admin_prod_name_en",
+    "admin_prod_name_sr",
+    "admin_prod_unit",
+    "admin_loc_name_en",
+    "admin_loc_name_sr",
+    "admin_assign_username",
+  ];
+
   bot.use(async (ctx, next) => {
     if (ctx.updateType !== "message") return next();
     const msg = (ctx as any).message;
@@ -34,15 +41,7 @@ export function createBot(): Telegraf {
     const waiting = getWaiting(userId);
     if (!waiting) return next();
 
-    const adminTypes = [
-      "admin_cat_name_en",
-      "admin_cat_name_sr",
-      "admin_prod_name_en",
-      "admin_prod_name_sr",
-      "admin_prod_unit",
-    ];
-
-    if (!adminTypes.includes(waiting.type)) return next();
+    if (!adminTextTypes.includes(waiting.type)) return next();
 
     const user = await getUser(userId);
     if (!user?.isAdmin) return next();
@@ -55,7 +54,6 @@ export function createBot(): Telegraf {
     );
 
     if (!handled) return next();
-    // Delete user message
     try { await ctx.deleteMessage(); } catch {}
   });
 

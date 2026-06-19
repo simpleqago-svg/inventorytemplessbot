@@ -10,7 +10,7 @@ import {
   getLocationById,
 } from "../db.js";
 import { buildReportText } from "../report.js";
-import { userLocation } from "./start.js";
+import { resolveLocation, goToCategories } from "./start.js";
 
 export function registerReportHandlers(bot: Telegraf<Context>) {
   bot.action("report", async (ctx) => {
@@ -19,7 +19,7 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const location = await getLocationById(locId);
@@ -33,13 +33,18 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
       const locationName = lang === "sr" ? location.nameSr : location.nameEn;
       const text = await buildReportText(session.id, username, locationName, lang);
 
-      await ctx.editMessageText(text, {
-        parse_mode: "Markdown",
-        reply_markup: reportKeyboard(lang),
-      });
+      try {
+        await ctx.editMessageText(text, {
+          parse_mode: "Markdown",
+          reply_markup: reportKeyboard(lang),
+        });
+      } catch (e: any) {
+        if (!e?.message?.includes("message is not modified")) throw e;
+      }
       await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "report action error");
+      try { await ctx.answerCbQuery(); } catch {}
     }
   });
 
@@ -49,7 +54,7 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      const locId = userLocation.get(userId);
+      const locId = await resolveLocation(userId);
       if (!locId) { await ctx.answerCbQuery(); return; }
 
       const session = await getSession(userId, locId);
@@ -70,18 +75,16 @@ export function registerReportHandlers(bot: Telegraf<Context>) {
 
       const channelId = process.env["TELEGRAM_CHANNEL_ID"];
       if (channelId) {
-        await ctx.telegram.sendMessage(channelId, text, {
-          parse_mode: "Markdown",
-        });
+        await ctx.telegram.sendMessage(channelId, text, { parse_mode: "Markdown" });
       }
 
       await closeSession(session.id);
-      userLocation.delete(userId);
 
-      await ctx.editMessageText(t[lang].submitted);
-      await ctx.answerCbQuery();
+      await ctx.answerCbQuery(t[lang].submitted);
+      await goToCategories(ctx, userId, locId, true);
     } catch (err) {
       logger.error({ err }, "submit action error");
+      try { await ctx.answerCbQuery(); } catch {}
     }
   });
 }
