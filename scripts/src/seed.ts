@@ -7,7 +7,6 @@ import {
 
 const locations = [
   { nameEn: "Vračar", nameSr: "Vračar" },
-  { nameEn: "Dorćol", nameSr: "Dorćol" },
 ];
 
 type MeasurementType = "numeric" | "color" | "both";
