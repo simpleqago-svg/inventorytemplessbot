@@ -15,6 +15,15 @@ import {
   type InventoryRecord,
 } from "@workspace/db";
 
+function isAdminUsername(username: string | undefined): boolean {
+  if (!username) return false;
+  const list = (process.env["ADMIN_USERNAMES"] ?? "")
+    .split(",")
+    .map((u) => u.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(username.toLowerCase());
+}
+
 export async function upsertUser(
   id: number,
   username: string | undefined
@@ -24,10 +33,24 @@ export async function upsertUser(
     .from(usersTable)
     .where(eq(usersTable.id, id))
     .limit(1);
-  if (existing[0]) return existing[0];
+  if (existing[0]) {
+    // Promote to admin if username matches and not already admin
+    if (!existing[0].isAdmin && isAdminUsername(username)) {
+      await db
+        .update(usersTable)
+        .set({ isAdmin: true, username: username ?? null })
+        .where(eq(usersTable.id, id));
+      return { ...existing[0], isAdmin: true, username: username ?? null };
+    }
+    return existing[0];
+  }
   const [user] = await db
     .insert(usersTable)
-    .values({ id, username: username ?? null })
+    .values({
+      id,
+      username: username ?? null,
+      isAdmin: isAdminUsername(username),
+    })
     .returning();
   return user!;
 }
