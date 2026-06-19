@@ -1,0 +1,118 @@
+## Роль и Цель
+Ты — опытный Fullstack TypeScript разработчик. Твоя задача — создать Telegram-бот для инвентаризации кофейни. Бот должен быть написан строго под стек среды Replit, обладать модульной архитектурой и поддерживать одновременную работу до 4 сотрудников без перезаписи данных друг друга.
+
+Интерфейс должен быть максимально чистым, работать ИСКЛЮЧИТЕЛЬНО на inline-кнопках (через редактирование текущего сообщения `ctx.editMessageText`), чтобы не засорять чат.
+
+## Технологический стек (Strict Stack)
+- **Runtime:** Node.js 24, TypeScript 5.9
+- **Структура:** pnpm workspaces (монорепо)
+- **Web-сервер:** Express 5
+- **Telegram Bot:** Telegraf (версия 4.x, режим Polling)
+- **База данных:** PostgreSQL (Встроенная Replit DB)
+- **ORM:** Drizzle ORM + drizzle-zod
+- **Сборщик:** esbuild (бандлинг в ESM)
+- **Логирование:** pino + pino-pretty
+
+---
+
+## Архитектура Базы Данных (Drizzle ORM)
+Спроектируй схему со следующими таблицами:
+1. **users:** `id` (Telegram ID), `username`, `lang` ('en' | 'sr'), `is_admin` (boolean).
+2. **locations:** `id` (serial), `name_en`, `name_sr`. (Начальные данные: Vračar, Dorćol).
+3. **categories:** `id` (serial), `name_en`, `name_sr`.
+4. **products:** - `id` (serial), `category_id`, `name_en`, `name_sr`
+   - `measurement_type`: enum ('numeric', 'color', 'both')
+   - `unit`: string (например: pcs, pack, l, ml, kg) — используется, если тип numeric или both.
+5. **active_sessions:** Учет сессий сотрудников. `id`, `user_id`, `location_id`, `status` ('in_progress', 'completed'), `updated_at`.
+6. **inventory_records:** Текущие сохраненные ответы. `id`, `session_id`, `product_id`, `val_numeric` (real, nullable), `val_color` (enum: 'green', 'yellow', 'red', nullable).
+
+---
+
+## Логика работы и Пользовательский сценарий (User Flow)
+
+### 1. Старт и Настройки (Язык и Локация)
+- Команда `/start` проверяет пользователя в БД. Если языка нет, выводится inline-выбор: **English 🇬🇧 / Српски 🇷🇸**.
+- Далее открывается выбор локации: **Vračar / Dorćol**.
+- Все данные сессии привязываются к связке `Пользователь + Локация` в PostgreSQL. Логика не должна сбоить, если 2-3 сотрудника одновременно заполняют инвентаризацию на разных или одинаковых точках.
+
+### 2. Главное меню категорий
+- Отображает категории в 2 столбца (Inline-кнопки).
+- Под категориями всегда закреплены 2 системные кнопки:
+  - `📋 Pregled izveštaja / View Report` — просмотр текущего прогресса.
+  - `🔄 Poništi izveštaj / Reset Report` — полная очистка текущей сессии (с inline-подтверждением "Вы уверены?").
+
+### 3. Навигация внутри категории и Ввод данных
+При клике на категорию открывается список её товаров.
+- **Индикатор заполненности:** Если позиция уже заполнена в этой сессии, перед её названием на кнопке динамически отображается галочка `✅` (например, `✅ Obično mleko`).
+- Внизу списка товаров всегда есть кнопки: `⬅️ Ka kategorijama / To Categories` и `📋 Pregled izveštaja`.
+
+**При клике на товар бот проверяет `measurement_type`:**
+- **Тип А (Numeric):** Бот меняет текст сообщения на "Unesite količinu / Enter quantity (unit):". Пользователь пишет число в чат. Бот с помощью Telegraf Hear/FSM ловит текстовое сообщение, валидирует (что это число), удаляет сообщение пользователя (чтобы не было мусора), обновляет данные в БД, отправляет уведомление "Dodato ✅" и **сразу же возвращает пользователя в меню текущей категории** (обновляя сообщение).
+- **Тип Б (Color / Светофор):** Открывается inline-подменю с кнопками: 
+  - `🟢 Zeleno (Mnogo / В наличии)`
+  - `🟡 Žuto (Zadržava se / Хватит на пару дней)`
+  - `🔴 Crveno (Hitno / Горим, заказать)`
+  - `⬅️ Nazad / Back`
+  При клике статус мгновенно пишется в БД, и бот возвращает юзера в меню категории.
+- **Тип В (Both):** Сначала запрашивается ввод числа (текстом), а затем сразу открывается выбор цвета (inline-кнопками).
+
+### 4. Исправление ошибок
+Если пользователь ошибся, он может просто кликнуть на эту же позицию еще раз — новое значение перезапишет старое в `inventory_records`.
+
+### 5. Просмотр и отправка отчета в Канал
+При клике на `📋 Pregled izveštaja`:
+- Формируется красивый текстовый шаблон: Имя сотрудника, Локация, Дата, и список позиций, разбитый по категориям. Числа выводятся с единицами измерения (`10 pcs`, `2 l`), цвета выводятся в виде эмодзи (`🟢`, `🟡`, `🔴`). Если тип `both` — выводятся и число, и цвет рядом.
+- Под текстом доступны кнопки: 
+  - `✅ Posalji / Submit` — закрывает сессию, отправляет этот отчет в админ-канал (ID канала берется из переменной окружения `TELEGRAM_CHANNEL_ID`). **Обязательно добавить динамический хэштег даты** (например, `#report_19_06_2026`) в конец сообщения для удобного поиска по архиву канала.
+  - `✏️ Uredi stavku / Edit` (возврат к категориям).
+  - `⬅️ Nazad / Back`.
+
+---
+
+## Админ-панель (Добавление позиций без кода)
+Для пользователей со статусом `is_admin = true` доступна секретная команда `/admin` или кнопка управления.
+Через пошаговый inline-интерфейс админ может:
+1. **Добавить категорию:** ввести названия на английском и сербском.
+2. **Добавить позицию:** - Выбрать существующую категорию из inline-списка.
+   - Ввести названия (English / Srpski).
+   - Выбрать тип исчисления через inline-кнопки: `Цвета`, `Веса/Количества`, `Веса + Цвета вместе`.
+   - Если выбран вес/количество — бот просит ввести единицу измерения (шт, уп, л, мл, кг).
+Все изменения сразу пишутся в БД и становятся доступны сотрудникам.
+
+---
+
+## Начальные данные для миграции (Seed Data)
+При первом запуске скрипта или инициализации БД (Drizzle Seeder), автоматически заполни базу данных следующими категориями и позициями (по умолчанию для них настроен язык и типы):
+
+*Позиции и категории (импортируй этот массив данных в seeder):*
+- **Flasirana pica** (Тип: color)
+  [Aloe, Sveps, Vino belo, Vino crveno, Coca cola, Coca cola zero, Kombuha Natural, Kombuha Cherry, Kombuha Zova, Tonic three cents, Rosa, Knjaz milos, Granini jabuka, Granini jagoda, Granini narandza, Granini Peach, Ledeni caj Lavanada, Ledeni caj SIipak, SP Aranciata 0,2, sp Aranciata 0,33, SP Aranciata, SP Aranciata Rossa Zero 330ml, SP gazirana voda 0,25, SP Limonata 0,33, SP Limonata Zero 0,33, SP Limun Menta 350ml, SP Melograno Arancia 0,33, SP Oak Tonic 200ml, SP Tonic Citrus 0,2]
+- **Mleko** (Тип: color)
+  [Obicno mleko, Ovseno mleko, Kokos mleko, Vanila mleko, Pavlaka za kuvanje]
+- **Kafa** (Тип: numeric, Unit: 'pcs')
+  [Brazil 200gr, Kenya 200gr, Costa Rica 200gr, Brazil, Decaf, Costa Rica, Kenya]
+- **Papirna galanterija** (Тип: numeric, Unit: 'pcs')
+  [Vc papir, Ubrusi, Salvete]
+- **Rolne za racune** (Тип: numeric, Unit: 'pcs')
+  [Papir za Terminal, Papir za Kasu]
+- **Hemija i potrosni materijal** (Тип: color)
+  [Kese za smece velike, Kese za smece male, Detardzent za sudove, Sapun za ruke, Sapun za ruke za goste, Sredstvo za pranje podova, Sredstvo za stakla, Rukavice, Krema za ruke, Krpe za poliranje]
+- **To go** (Тип: numeric, Unit: 'pcs')
+  [Case L, Case M, Case S, Plasticne case L, Plasticne case S, Poklopac za papirne case L, Poklopac za papirne case M, Poklopac za papirne case S, Poklopac za plasticne case, To go kutije, To go poklopci, Nosaci za case, Slamcice, Drvene Kasike, Drvene Viljuske]
+- **Cajevi** (Тип: numeric, Unit: 'pcs')
+  [Crni caj, Rooibos, Earl grey, Zeleni caj, Bai mu dan, Fruit mix, Jasmin, Oolong, Rice Pu erh, Yoga, Yunnan]
+- **Matcha** (Тип: numeric, Unit: 'pcs')
+  [Matcha, Plava matcha]
+- **Voce** (Тип: numeric, Unit: 'kg')
+  [Narandze, Lime]
+- **Sastojci** (Тип: numeric, Unit: 'pcs')
+  [Kakao, Cimet, Cili, Vanila secer, Beli secer, Secer za goste, Cokolada, Sladoled, So, Acid, Smrznute jagode, Sumsko voce, Lesnik]
+- **Pire i sirupi** (Тип: numeric, Unit: 'pcs')
+  [Pire banana, Pire borovnica, Pire breskva, Pire jagoda, Pire Mango, Pire Ananas, Sirup Estragon, Sirup Ruza, Sirup Orhideja, Sirup javor, Sirup vanila, Sirup jagoda, Sirup Lesnik, Sirup karamela, Sirup cokolada, Sirup bela cokolada, Sirup pistaci, Sirup kokos, Sirup visnja, Sirup zova, Sirup Nana]
+- **Merch** (Тип: numeric, Unit: 'pcs')
+  [Plava majica, Bela majica, V60 filteri, AeroPress filteri, Aeropress maker, Origami dripper, V60 set, Hairo coffee Bottle, Stenli, Termos veliki, Termos mali, Bez solja, Plava solja, Plava solja sa kaisem, Longsleeve, Duks]
+
+## Требования к коду
+1. Раздели код по модулям: `src/db/schema.ts`, `src/bot/handlers/`, `src/bot/keyboards.ts`, `src/index.ts`.
+2. Используй интернационализацию (i18n): создай объект локализации, строки переключаются в зависимости от сохраненного `user.lang`.
+3. Напиши чистый TypeScript код с обработкой ошибок (try/catch) и логированием через `pino`. Выдавай код файлами без сокращений.
