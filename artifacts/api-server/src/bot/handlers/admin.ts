@@ -1,8 +1,7 @@
-import { Telegraf, Context } from "telegraf";
+import { Telegraf, Context, Telegram } from "telegraf";
 import { logger } from "../../lib/logger.js";
 import { t, getLang } from "../i18n.js";
 import {
-  adminKeyboard,
   adminCategoryKeyboard,
   adminTypeKeyboard,
   settingsKeyboard,
@@ -10,6 +9,9 @@ import {
   deleteProductCategoryKeyboard,
   deleteProductKeyboard,
   confirmDeleteKeyboard,
+  editProductTypeCategoryKeyboard,
+  editProductTypeProductKeyboard,
+  editTypeKeyboard,
 } from "../keyboards.js";
 import {
   getUser,
@@ -17,6 +19,7 @@ import {
   getProductsByCategory,
   addCategory,
   addProduct,
+  updateProduct,
   addLocation,
   getUserByUsername,
   setUserAdmin,
@@ -56,7 +59,10 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
-      setWaiting(userId, { type: "admin_cat_name_en" });
+      const msgId = ctx.callbackQuery.message?.message_id;
+      const chatId = ctx.chat?.id;
+      if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+      setWaiting(userId, { type: "admin_cat_name_en", messageId: msgId, chatId });
       await ctx.editMessageText(t[lang].enterCategoryNameEn);
       await ctx.answerCbQuery();
     } catch (err) {
@@ -90,7 +96,10 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
-      setWaiting(userId, { type: "admin_loc_name_en" });
+      const msgId = ctx.callbackQuery.message?.message_id;
+      const chatId = ctx.chat?.id;
+      if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+      setWaiting(userId, { type: "admin_loc_name_en", messageId: msgId, chatId });
       await ctx.editMessageText(t[lang].enterLocationNameEn);
       await ctx.answerCbQuery();
     } catch (err) {
@@ -106,7 +115,10 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const lang = getLang(user?.lang);
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
-      setWaiting(userId, { type: "admin_prod_name_en", categoryId });
+      const msgId = ctx.callbackQuery.message?.message_id;
+      const chatId = ctx.chat?.id;
+      if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+      setWaiting(userId, { type: "admin_prod_name_en", categoryId, messageId: msgId, chatId });
       await ctx.editMessageText(t[lang].enterProductNameEn);
       await ctx.answerCbQuery();
     } catch (err) {
@@ -141,6 +153,8 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
           nameEn: waiting.nameEn,
           nameSr: waiting.nameSr,
           measurementType: mType,
+          messageId: waiting.messageId,
+          chatId: waiting.chatId,
         });
         await ctx.editMessageText(t[lang].enterUnit);
       }
@@ -306,11 +320,102 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
-      setWaiting(userId, { type: "admin_assign_username" });
+      const msgId = ctx.callbackQuery.message?.message_id;
+      const chatId = ctx.chat?.id;
+      if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+      setWaiting(userId, { type: "admin_assign_username", messageId: msgId, chatId });
       await ctx.editMessageText(t[lang].enterAdminUsername);
       await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "settings:assign_admin error");
+    }
+  });
+
+  // ── Edit product type ─────────────────────────────────────────────────────
+  bot.action("admin:edit_prod_type", async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categories = await getCategories();
+      await ctx.editMessageText(t[lang].chooseCategory, {
+        reply_markup: editProductTypeCategoryKeyboard(categories),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:edit_prod_type error");
+    }
+  });
+
+  bot.action(/^admin:edit_pt_cat:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const categoryId = parseInt(ctx.match[1]!);
+      const products = await getProductsByCategory(categoryId);
+      await ctx.editMessageText(t[lang].chooseProductToEdit, {
+        reply_markup: editProductTypeProductKeyboard(products, lang),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:edit_pt_cat error");
+    }
+  });
+
+  bot.action(/^admin:edit_pt_pick:(\d+)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const productId = parseInt(ctx.match[1]!);
+      const msgId = ctx.callbackQuery.message?.message_id;
+      const chatId = ctx.chat?.id;
+      if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+      const prod = await getProduct(productId);
+      if (!prod) { await ctx.answerCbQuery(); return; }
+      const prodName = lang === "sr" ? prod.nameSr : prod.nameEn;
+      await ctx.editMessageText(`${t[lang].chooseType}\n<b>${prodName}</b>`, {
+        parse_mode: "HTML",
+        reply_markup: editTypeKeyboard(lang, productId),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:edit_pt_pick error");
+    }
+  });
+
+  bot.action(/^admin:type_upd:(\d+):(color|numeric|both)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
+      const productId = parseInt(ctx.match[1]!);
+      const mType = ctx.match[2] as "color" | "numeric" | "both";
+
+      if (mType === "color") {
+        await updateProduct(productId, "color", null);
+        await ctx.editMessageText(t[lang].productTypeUpdated, {
+          reply_markup: settingsKeyboard(lang, true),
+        });
+      } else {
+        const msgId = ctx.callbackQuery.message?.message_id;
+        const chatId = ctx.chat?.id;
+        if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
+        setWaiting(userId, { type: "admin_edit_prod_unit", productId, measurementType: mType, messageId: msgId, chatId });
+        await ctx.editMessageText(t[lang].enterUnit);
+      }
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:type_upd error");
     }
   });
 }
@@ -319,7 +424,7 @@ export async function handleAdminText(
   _bot: Telegraf<Context>,
   userId: number,
   text: string,
-  replyFn: (msg: string, opts?: object) => Promise<unknown>
+  telegram: Telegram
 ): Promise<boolean> {
   const waiting = getWaiting(userId);
   if (!waiting) return false;
@@ -329,16 +434,20 @@ export async function handleAdminText(
 
   const lang = getLang(user.lang);
 
+  const edit = async (msg: string, opts?: object) => {
+    await telegram.editMessageText(waiting.chatId, waiting.messageId, undefined, msg, opts as any);
+  };
+
   switch (waiting.type) {
     case "admin_cat_name_en": {
-      setWaiting(userId, { type: "admin_cat_name_sr", nameEn: text });
-      await replyFn(t[lang].enterCategoryNameSr);
+      setWaiting(userId, { type: "admin_cat_name_sr", nameEn: text, messageId: waiting.messageId, chatId: waiting.chatId });
+      await edit(t[lang].enterCategoryNameSr);
       return true;
     }
     case "admin_cat_name_sr": {
       await addCategory(waiting.nameEn, text);
       clearWaiting(userId);
-      await replyFn(t[lang].categorySaved);
+      await edit(t[lang].categorySaved, { reply_markup: settingsKeyboard(lang, true) });
       return true;
     }
     case "admin_prod_name_en": {
@@ -346,8 +455,10 @@ export async function handleAdminText(
         type: "admin_prod_name_sr",
         categoryId: waiting.categoryId,
         nameEn: text,
+        messageId: waiting.messageId,
+        chatId: waiting.chatId,
       });
-      await replyFn(t[lang].enterProductNameSr);
+      await edit(t[lang].enterProductNameSr);
       return true;
     }
     case "admin_prod_name_sr": {
@@ -356,8 +467,10 @@ export async function handleAdminText(
         categoryId: waiting.categoryId,
         nameEn: waiting.nameEn,
         nameSr: text,
+        messageId: waiting.messageId,
+        chatId: waiting.chatId,
       });
-      await replyFn(t[lang].chooseType, { reply_markup: adminTypeKeyboard(lang) });
+      await edit(t[lang].chooseType, { reply_markup: adminTypeKeyboard(lang) });
       return true;
     }
     case "admin_prod_unit": {
@@ -369,31 +482,37 @@ export async function handleAdminText(
         text
       );
       clearWaiting(userId);
-      await replyFn(t[lang].productSaved);
+      await edit(t[lang].productSaved, { reply_markup: settingsKeyboard(lang, true) });
       return true;
     }
     case "admin_loc_name_en": {
-      setWaiting(userId, { type: "admin_loc_name_sr", nameEn: text });
-      await replyFn(t[lang].enterLocationNameSr);
+      setWaiting(userId, { type: "admin_loc_name_sr", nameEn: text, messageId: waiting.messageId, chatId: waiting.chatId });
+      await edit(t[lang].enterLocationNameSr);
       return true;
     }
     case "admin_loc_name_sr": {
       await addLocation(waiting.nameEn, text);
       clearWaiting(userId);
-      await replyFn(t[lang].locationSaved);
+      await edit(t[lang].locationSaved, { reply_markup: settingsKeyboard(lang, true) });
       return true;
     }
     case "admin_assign_username": {
       const target = await getUserByUsername(text);
       if (!target) {
         clearWaiting(userId);
-        await replyFn(t[lang].userNotFound);
+        await edit(t[lang].userNotFound, { reply_markup: settingsKeyboard(lang, true) });
         return true;
       }
       await setUserAdmin(target.id, true);
       clearWaiting(userId);
       const uname = target.username ?? String(target.id);
-      await replyFn(t[lang].adminAssigned(uname));
+      await edit(t[lang].adminAssigned(uname), { reply_markup: settingsKeyboard(lang, true) });
+      return true;
+    }
+    case "admin_edit_prod_unit": {
+      await updateProduct(waiting.productId, waiting.measurementType, text);
+      clearWaiting(userId);
+      await edit(t[lang].productTypeUpdated, { reply_markup: settingsKeyboard(lang, true) });
       return true;
     }
     default:

@@ -183,15 +183,15 @@ export function registerInventoryHandlers(bot: Telegraf<Context>) {
     }
   });
 
-  bot.on("text", async (ctx) => {
+  bot.on("text", async (ctx, next) => {
     try {
       const userId = ctx.from?.id;
-      if (!userId) return;
+      if (!userId) return next();
       const waiting = getWaiting(userId);
-      if (!waiting) return;
+      if (!waiting) return next();
 
       if (waiting.type !== "numeric" && waiting.type !== "numeric_then_color") {
-        return;
+        return next();
       }
 
       const user = await getUser(userId);

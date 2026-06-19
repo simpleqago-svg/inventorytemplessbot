@@ -1,4 +1,4 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   usersTable,
@@ -34,7 +34,6 @@ export async function upsertUser(
     .where(eq(usersTable.id, id))
     .limit(1);
   if (existing[0]) {
-    // Promote to admin if username matches and not already admin
     if (!existing[0].isAdmin && isAdminUsername(username)) {
       await db
         .update(usersTable)
@@ -223,6 +222,17 @@ export async function addProduct(
     .values({ categoryId, nameEn, nameSr, measurementType, unit })
     .returning();
   return prod!;
+}
+
+export async function updateProduct(
+  productId: number,
+  measurementType: "numeric" | "color" | "both",
+  unit: string | null
+): Promise<void> {
+  await db
+    .update(productsTable)
+    .set({ measurementType, unit })
+    .where(eq(productsTable.id, productId));
 }
 
 export async function getLocationById(

@@ -6,7 +6,18 @@ import { registerReportHandlers } from "./handlers/report.js";
 import { registerAdminHandlers, handleAdminText } from "./handlers/admin.js";
 import { getWaiting } from "./state.js";
 import { getUser } from "./db.js";
-import { getLang } from "./i18n.js";
+
+const adminTextTypes = [
+  "admin_cat_name_en",
+  "admin_cat_name_sr",
+  "admin_prod_name_en",
+  "admin_prod_name_sr",
+  "admin_prod_unit",
+  "admin_loc_name_en",
+  "admin_loc_name_sr",
+  "admin_assign_username",
+  "admin_edit_prod_unit",
+];
 
 export function createBot(): Telegraf {
   const token = process.env["TELEGRAM_BOT_TOKEN"];
@@ -15,21 +26,8 @@ export function createBot(): Telegraf {
   const bot = new Telegraf(token);
 
   registerStartHandlers(bot);
-  registerInventoryHandlers(bot);
-  registerReportHandlers(bot);
-  registerAdminHandlers(bot);
 
-  const adminTextTypes = [
-    "admin_cat_name_en",
-    "admin_cat_name_sr",
-    "admin_prod_name_en",
-    "admin_prod_name_sr",
-    "admin_prod_unit",
-    "admin_loc_name_en",
-    "admin_loc_name_sr",
-    "admin_assign_username",
-  ];
-
+  // Admin text middleware must run BEFORE inventory's bot.on("text")
   bot.use(async (ctx, next) => {
     if (ctx.updateType !== "message") return next();
     const msg = (ctx as any).message;
@@ -50,12 +48,16 @@ export function createBot(): Telegraf {
       bot,
       userId,
       msg.text,
-      (text: string, opts?: object) => ctx.reply(text, opts)
+      ctx.telegram
     );
 
     if (!handled) return next();
     try { await ctx.deleteMessage(); } catch {}
   });
+
+  registerInventoryHandlers(bot);
+  registerReportHandlers(bot);
+  registerAdminHandlers(bot);
 
   bot.catch((err, ctx) => {
     logger.error({ err, update: ctx.update }, "Unhandled bot error");

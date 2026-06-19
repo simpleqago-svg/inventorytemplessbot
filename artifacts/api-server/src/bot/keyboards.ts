@@ -25,6 +25,12 @@ function name(item: { nameEn: string; nameSr: string }, lang: Lang): string {
   return lang === "sr" ? item.nameSr : item.nameEn;
 }
 
+function typeTag(mType: string): string {
+  if (mType === "color") return "🎨";
+  if (mType === "numeric") return "🔢";
+  return "🔢🎨";
+}
+
 export function categoriesKeyboard(
   categories: Category[],
   lang: Lang,
@@ -115,6 +121,7 @@ export function settingsKeyboard(lang: Lang, isAdmin: boolean): InlineKeyboardMa
       { text: t[lang].deleteCategory, callback_data: "admin:del_cat" },
       { text: t[lang].deleteProduct, callback_data: "admin:del_prod" },
     ]);
+    rows.push([{ text: t[lang].editProductType, callback_data: "admin:edit_prod_type" }]);
     rows.push([{ text: t[lang].addLocation, callback_data: "admin:add_loc" }]);
     rows.push([{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }]);
   }
@@ -207,6 +214,45 @@ export function adminTypeKeyboard(lang: Lang): InlineKeyboardMarkup {
       [{ text: t[lang].typeColor, callback_data: "admin:type:color" }],
       [{ text: t[lang].typeNumeric, callback_data: "admin:type:numeric" }],
       [{ text: t[lang].typeBoth, callback_data: "admin:type:both" }],
+      [{ text: t[lang].cancelAdmin, callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function editProductTypeCategoryKeyboard(categories: Category[]): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...categories.map((c) => [
+        { text: c.nameSr, callback_data: `admin:edit_pt_cat:${c.id}` },
+      ]),
+      [{ text: "❌", callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function editProductTypeProductKeyboard(
+  products: Product[],
+  lang: Lang
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...products.map((p) => [
+        {
+          text: `${name(p, lang)} ${typeTag(p.measurementType)}`,
+          callback_data: `admin:edit_pt_pick:${p.id}`,
+        },
+      ]),
+      [{ text: "❌", callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
+export function editTypeKeyboard(lang: Lang, productId: number): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [{ text: t[lang].typeColor, callback_data: `admin:type_upd:${productId}:color` }],
+      [{ text: t[lang].typeNumeric, callback_data: `admin:type_upd:${productId}:numeric` }],
+      [{ text: t[lang].typeBoth, callback_data: `admin:type_upd:${productId}:both` }],
       [{ text: t[lang].cancelAdmin, callback_data: "admin:cancel" }],
     ],
   };

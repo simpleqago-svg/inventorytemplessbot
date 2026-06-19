@@ -35,6 +35,7 @@ export const t = {
     adminMenu: "⚙️ Admin Panel:",
     addCategory: "➕ Add Category",
     addProduct: "➕ Add Product",
+    editProductType: "✏️ Edit Product Type",
     enterCategoryNameEn: "Enter category name in English:",
     enterCategoryNameSr: "Enter category name in Serbian:",
     categorySaved: "✅ Category saved.",
@@ -47,6 +48,7 @@ export const t = {
     typeBoth: "🔢+🎨 Both",
     enterUnit: "Enter unit (e.g. pcs, kg, l, ml):",
     productSaved: "✅ Product saved.",
+    productTypeUpdated: "✅ Product type updated.",
     addLocation: "📍 Add Location",
     enterLocationNameEn: "Enter location name in English:",
     enterLocationNameSr: "Enter location name in Serbian:",
@@ -66,6 +68,7 @@ export const t = {
     deleteYes: "🗑 Yes, delete",
     deleteNo: "❌ No, cancel",
     chooseProductToDelete: "Choose a product to delete:",
+    chooseProductToEdit: "Choose a product to edit:",
   },
   sr: {
     chooseLanguage: "Izaberite jezik:",
@@ -101,6 +104,7 @@ export const t = {
     adminMenu: "⚙️ Admin panel:",
     addCategory: "➕ Dodaj kategoriju",
     addProduct: "➕ Dodaj poziciju",
+    editProductType: "✏️ Izmeni tip pozicije",
     enterCategoryNameEn: "Unesite naziv kategorije na engleskom:",
     enterCategoryNameSr: "Unesite naziv kategorije na srpskom:",
     categorySaved: "✅ Kategorija sačuvana.",
@@ -113,6 +117,7 @@ export const t = {
     typeBoth: "🔢+🎨 Oba",
     enterUnit: "Unesite jedinicu mere (npr. kom, kg, l, ml):",
     productSaved: "✅ Pozicija sačuvana.",
+    productTypeUpdated: "✅ Tip pozicije ažuriran.",
     addLocation: "📍 Dodaj lokaciju",
     enterLocationNameEn: "Unesite naziv lokacije na engleskom:",
     enterLocationNameSr: "Unesite naziv lokacije na srpskom:",
@@ -132,6 +137,7 @@ export const t = {
     deleteYes: "🗑 Da, obriši",
     deleteNo: "❌ Ne, otkaži",
     chooseProductToDelete: "Izaberite poziciju za brisanje:",
+    chooseProductToEdit: "Izaberite poziciju za izmenu:",
   },
 } as const;
 
