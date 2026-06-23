@@ -72,7 +72,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Coffee",
     nameSr: "Kafa",
     type: "numeric",
-    unit: "pcs",
+    unit: "g",
     products: [
       { en: "Brazil 200g", sr: "Brazil 200gr" },
       { en: "Kenya 200g", sr: "Kenya 200gr" },
@@ -87,7 +87,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Paper Products",
     nameSr: "Papirna galanterija",
     type: "numeric",
-    unit: "pcs",
+    unit: "pak",
     products: [
       { en: "Toilet Paper", sr: "Vc papir" },
       { en: "Paper Towels", sr: "Ubrusi" },
@@ -98,7 +98,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Receipt Rolls",
     nameSr: "Rolne za racune",
     type: "numeric",
-    unit: "pcs",
+    unit: "kom",
     products: [
       { en: "Terminal Receipt Paper", sr: "Papir za Terminal" },
       { en: "POS Receipt Paper", sr: "Papir za Kasu" },
@@ -125,7 +125,7 @@ const seedData: SeedCategory[] = [
     nameEn: "To Go",
     nameSr: "To go",
     type: "numeric",
-    unit: "pcs",
+    unit: "kom",
     products: [
       { en: "Paper Cups L", sr: "Case L" },
       { en: "Paper Cups M", sr: "Case M" },
@@ -148,7 +148,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Teas",
     nameSr: "Cajevi",
     type: "numeric",
-    unit: "pcs",
+    unit: "kut",
     products: [
       { en: "Black Tea", sr: "Crni caj" },
       { en: "Rooibos", sr: "Rooibos" },
@@ -167,7 +167,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Matcha",
     nameSr: "Matcha",
     type: "numeric",
-    unit: "pcs",
+    unit: "g",
     products: [
       { en: "Matcha", sr: "Matcha" },
       { en: "Blue Matcha", sr: "Plava matcha" },
@@ -177,7 +177,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Fruits",
     nameSr: "Voce",
     type: "numeric",
-    unit: "kg",
+    unit: "g",
     products: [
       { en: "Oranges", sr: "Narandze" },
       { en: "Lime", sr: "Lime" },
@@ -187,7 +187,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Ingredients",
     nameSr: "Sastojci",
     type: "numeric",
-    unit: "pcs",
+    unit: "g",
     products: [
       { en: "Cocoa", sr: "Kakao" },
       { en: "Cinnamon", sr: "Cimet" },
@@ -208,7 +208,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Purees & Syrups",
     nameSr: "Pire i sirupi",
     type: "numeric",
-    unit: "pcs",
+    unit: "ml",
     products: [
       { en: "Banana Puree", sr: "Pire banana" },
       { en: "Blueberry Puree", sr: "Pire borovnica" },
@@ -237,7 +237,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Merch",
     nameSr: "Merch",
     type: "numeric",
-    unit: "pcs",
+    unit: "kom",
     products: [
       { en: "Blue T-Shirt", sr: "Plava majica" },
       { en: "White T-Shirt", sr: "Bela majica" },
