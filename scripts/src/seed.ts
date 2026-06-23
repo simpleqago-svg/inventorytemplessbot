@@ -72,7 +72,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Coffee",
     nameSr: "Kafa",
     type: "numeric",
-    unit: "g",
+    unit: "kom",
     products: [
       { en: "Brazil 200g", sr: "Brazil 200gr" },
       { en: "Kenya 200g", sr: "Kenya 200gr" },
