@@ -125,7 +125,7 @@ const seedData: SeedCategory[] = [
     nameEn: "To Go",
     nameSr: "To go",
     type: "numeric",
-    unit: "kom",
+    unit: "pak",
     products: [
       { en: "Paper Cups L", sr: "Case L" },
       { en: "Paper Cups M", sr: "Case M" },
