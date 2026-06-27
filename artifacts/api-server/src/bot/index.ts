@@ -41,9 +41,6 @@ export function createBot(): Telegraf {
 
     if (!adminTextTypes.includes(waiting.type)) return next();
 
-    const user = await getUser(userId);
-    if (!user?.isAdmin) return next();
-
     const handled = await handleAdminText(
       bot,
       userId,

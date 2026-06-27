@@ -108,24 +108,22 @@ export function reportKeyboard(lang: Lang): InlineKeyboardMarkup {
   };
 }
 
-export function settingsKeyboard(lang: Lang, isAdmin: boolean): InlineKeyboardMarkup {
+export function settingsKeyboard(lang: Lang): InlineKeyboardMarkup {
   const rows: { text: string; callback_data: string }[][] = [
     [{ text: t[lang].changeLanguage, callback_data: "settings:lang" }],
-  ];
-  if (isAdmin) {
-    rows.push([
+    [
       { text: t[lang].addCategory, callback_data: "admin:add_cat" },
       { text: t[lang].addProduct, callback_data: "admin:add_prod" },
-    ]);
-    rows.push([
+    ],
+    [
       { text: t[lang].deleteCategory, callback_data: "admin:del_cat" },
       { text: t[lang].deleteProduct, callback_data: "admin:del_prod" },
-    ]);
-    rows.push([{ text: t[lang].editProductType, callback_data: "admin:edit_prod_type" }]);
-    rows.push([{ text: t[lang].addLocation, callback_data: "admin:add_loc" }]);
-    rows.push([{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }]);
-  }
-  rows.push([{ text: t[lang].toCategories, callback_data: "cats" }]);
+    ],
+    [{ text: t[lang].editProductType, callback_data: "admin:edit_prod_type" }],
+    [{ text: t[lang].addLocation, callback_data: "admin:add_loc" }],
+    [{ text: t[lang].assignAdmin, callback_data: "settings:assign_admin" }],
+    [{ text: t[lang].toCategories, callback_data: "cats" }],
+  ];
   return { inline_keyboard: rows };
 }
 

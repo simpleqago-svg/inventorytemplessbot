@@ -155,7 +155,7 @@ export function registerStartHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       await ctx.editMessageText(t[lang].settingsMenu, {
-        reply_markup: settingsKeyboard(lang, user?.isAdmin ?? false),
+        reply_markup: settingsKeyboard(lang),
       });
       await ctx.answerCbQuery();
     } catch (err) {

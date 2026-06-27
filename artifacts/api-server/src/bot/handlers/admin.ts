@@ -39,13 +39,9 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       try { await ctx.deleteMessage(); } catch {}
-      if (!user?.isAdmin) {
-        await ctx.reply(t[lang].notAdmin);
-        return;
-      }
       clearWaiting(userId);
       await ctx.reply(t[lang].settingsMenu, {
-        reply_markup: settingsKeyboard(lang, true),
+        reply_markup: settingsKeyboard(lang),
       });
     } catch (err) {
       logger.error({ err }, "admin command error");
@@ -59,7 +55,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const msgId = ctx.callbackQuery.message?.message_id;
       const chatId = ctx.chat?.id;
       if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
@@ -78,7 +73,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].chooseCategory, {
         reply_markup: adminCategoryKeyboard(categories, lang),
@@ -96,7 +90,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const msgId = ctx.callbackQuery.message?.message_id;
       const chatId = ctx.chat?.id;
       if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
@@ -114,7 +107,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
       const msgId = ctx.callbackQuery.message?.message_id;
       const chatId = ctx.chat?.id;
@@ -133,7 +125,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const mType = ctx.match[1] as "color" | "numeric" | "both";
       const waiting = getWaiting(userId);
       if (!waiting || waiting.type !== "admin_prod_choose_type") {
@@ -145,7 +136,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
         await addProduct(waiting.categoryId, waiting.nameEn, waiting.nameSr, "color", null);
         clearWaiting(userId);
         await ctx.editMessageText(t[lang].productSaved, {
-          reply_markup: settingsKeyboard(lang, true),
+          reply_markup: settingsKeyboard(lang),
         });
       } else {
         setWaiting(userId, {
@@ -173,7 +164,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
       await ctx.editMessageText(t[lang].settingsMenu, {
-        reply_markup: settingsKeyboard(lang, user?.isAdmin ?? false),
+        reply_markup: settingsKeyboard(lang),
       });
       await ctx.answerCbQuery();
     } catch (err) {
@@ -188,7 +179,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].deleteCategory + ":", {
         reply_markup: deleteCategoryKeyboard(categories, lang),
@@ -205,7 +195,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
       const cat = await getCategoryById(categoryId);
       if (!cat) { await ctx.answerCbQuery(); return; }
@@ -226,12 +215,11 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
       await deleteCategory(categoryId);
       await ctx.answerCbQuery(t[lang].categoryDeleted);
       await ctx.editMessageText(t[lang].settingsMenu, {
-        reply_markup: settingsKeyboard(lang, true),
+        reply_markup: settingsKeyboard(lang),
       });
     } catch (err) {
       logger.error({ err }, "admin:del_cat_confirm error");
@@ -245,7 +233,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].deleteProduct + ":", {
         reply_markup: deleteProductCategoryKeyboard(categories, lang),
@@ -262,7 +249,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
       const products = await getProductsByCategory(categoryId);
       await ctx.editMessageText(t[lang].chooseProductToDelete, {
@@ -280,7 +266,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const productId = parseInt(ctx.match[1]!);
       const prod = await getProduct(productId);
       if (!prod) { await ctx.answerCbQuery(); return; }
@@ -301,12 +286,11 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const productId = parseInt(ctx.match[1]!);
       await deleteProduct(productId);
       await ctx.answerCbQuery(t[lang].productDeleted);
       await ctx.editMessageText(t[lang].settingsMenu, {
-        reply_markup: settingsKeyboard(lang, true),
+        reply_markup: settingsKeyboard(lang),
       });
     } catch (err) {
       logger.error({ err }, "admin:del_prod_confirm error");
@@ -320,7 +304,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const msgId = ctx.callbackQuery.message?.message_id;
       const chatId = ctx.chat?.id;
       if (!msgId || !chatId) { await ctx.answerCbQuery(); return; }
@@ -339,7 +322,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categories = await getCategories();
       await ctx.editMessageText(t[lang].chooseCategory, {
         reply_markup: editProductTypeCategoryKeyboard(categories, lang),
@@ -356,7 +338,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const categoryId = parseInt(ctx.match[1]!);
       const products = await getProductsByCategory(categoryId);
       await ctx.editMessageText(t[lang].chooseProductToEdit, {
@@ -374,7 +355,6 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const productId = parseInt(ctx.match[1]!);
       const msgId = ctx.callbackQuery.message?.message_id;
       const chatId = ctx.chat?.id;
@@ -398,14 +378,13 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       if (!userId) return;
       const user = await getUser(userId);
       const lang = getLang(user?.lang);
-      if (!user?.isAdmin) { await ctx.answerCbQuery(t[lang].notAdmin); return; }
       const productId = parseInt(ctx.match[1]!);
       const mType = ctx.match[2] as "color" | "numeric" | "both";
 
       if (mType === "color") {
         await updateProduct(productId, "color", null);
         await ctx.editMessageText(t[lang].productTypeUpdated, {
-          reply_markup: settingsKeyboard(lang, true),
+          reply_markup: settingsKeyboard(lang),
         });
       } else {
         const msgId = ctx.callbackQuery.message?.message_id;
@@ -431,9 +410,7 @@ export async function handleAdminText(
   if (!waiting) return false;
 
   const user = await getUser(userId);
-  if (!user?.isAdmin) return false;
-
-  const lang = getLang(user.lang);
+  const lang = getLang(user?.lang);
 
   const edit = async (msg: string, opts?: EditExtra) => {
     await telegram.editMessageText(waiting.chatId, waiting.messageId, undefined, msg, opts);
@@ -448,7 +425,7 @@ export async function handleAdminText(
     case "admin_cat_name_sr": {
       await addCategory(waiting.nameEn, text);
       clearWaiting(userId);
-      await edit(t[lang].categorySaved, { reply_markup: settingsKeyboard(lang, true) });
+      await edit(t[lang].categorySaved, { reply_markup: settingsKeyboard(lang) });
       return true;
     }
     case "admin_prod_name_en": {
@@ -483,7 +460,7 @@ export async function handleAdminText(
         text
       );
       clearWaiting(userId);
-      await edit(t[lang].productSaved, { reply_markup: settingsKeyboard(lang, true) });
+      await edit(t[lang].productSaved, { reply_markup: settingsKeyboard(lang) });
       return true;
     }
     case "admin_loc_name_en": {
@@ -494,26 +471,26 @@ export async function handleAdminText(
     case "admin_loc_name_sr": {
       await addLocation(waiting.nameEn, text);
       clearWaiting(userId);
-      await edit(t[lang].locationSaved, { reply_markup: settingsKeyboard(lang, true) });
+      await edit(t[lang].locationSaved, { reply_markup: settingsKeyboard(lang) });
       return true;
     }
     case "admin_assign_username": {
       const target = await getUserByUsername(text);
       if (!target) {
         clearWaiting(userId);
-        await edit(t[lang].userNotFound, { reply_markup: settingsKeyboard(lang, true) });
+        await edit(t[lang].userNotFound, { reply_markup: settingsKeyboard(lang) });
         return true;
       }
       await setUserAdmin(target.id, true);
       clearWaiting(userId);
       const uname = target.username ?? String(target.id);
-      await edit(t[lang].adminAssigned(uname), { reply_markup: settingsKeyboard(lang, true) });
+      await edit(t[lang].adminAssigned(uname), { reply_markup: settingsKeyboard(lang) });
       return true;
     }
     case "admin_edit_prod_unit": {
       await updateProduct(waiting.productId, waiting.measurementType, text);
       clearWaiting(userId);
-      await edit(t[lang].productTypeUpdated, { reply_markup: settingsKeyboard(lang, true) });
+      await edit(t[lang].productTypeUpdated, { reply_markup: settingsKeyboard(lang) });
       return true;
     }
     default:
