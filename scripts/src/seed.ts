@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   locationsTable,
@@ -16,14 +17,20 @@ interface SeedCategory {
   nameSr: string;
   type: MeasurementType;
   unit?: string;
+  visibleDays: number[];
   products: { en: string; sr: string }[];
 }
+
+const DAILY: number[] = [];
+const SUN: number[] = [0];
+const THU_SUN: number[] = [4, 0];
 
 const seedData: SeedCategory[] = [
   {
     nameEn: "Bottled Drinks",
     nameSr: "Flasirana pica",
     type: "color",
+    visibleDays: SUN,
     products: [
       { en: "Aloe", sr: "Aloe" },
       { en: "Schweppes", sr: "Sveps" },
@@ -60,6 +67,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Milk",
     nameSr: "Mleko",
     type: "color",
+    visibleDays: DAILY,
     products: [
       { en: "Regular Milk", sr: "Obicno mleko" },
       { en: "Oat Milk", sr: "Ovseno mleko" },
@@ -73,6 +81,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Kafa",
     type: "numeric",
     unit: "kom",
+    visibleDays: DAILY,
     products: [
       { en: "Brazil 200g", sr: "Brazil 200gr" },
       { en: "Kenya 200g", sr: "Kenya 200gr" },
@@ -88,6 +97,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Papirna galanterija",
     type: "numeric",
     unit: "pak",
+    visibleDays: THU_SUN,
     products: [
       { en: "Toilet Paper", sr: "Vc papir" },
       { en: "Paper Towels", sr: "Ubrusi" },
@@ -99,6 +109,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Rolne za racune",
     type: "numeric",
     unit: "kom",
+    visibleDays: SUN,
     products: [
       { en: "Terminal Receipt Paper", sr: "Papir za Terminal" },
       { en: "POS Receipt Paper", sr: "Papir za Kasu" },
@@ -108,6 +119,7 @@ const seedData: SeedCategory[] = [
     nameEn: "Chemicals & Supplies",
     nameSr: "Hemija i potrosni materijal",
     type: "color",
+    visibleDays: SUN,
     products: [
       { en: "Large Trash Bags", sr: "Kese za smece velike" },
       { en: "Small Trash Bags", sr: "Kese za smece male" },
@@ -126,6 +138,7 @@ const seedData: SeedCategory[] = [
     nameSr: "To go",
     type: "numeric",
     unit: "pak",
+    visibleDays: THU_SUN,
     products: [
       { en: "Paper Cups L", sr: "Case L" },
       { en: "Paper Cups M", sr: "Case M" },
@@ -149,6 +162,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Cajevi",
     type: "numeric",
     unit: "kut",
+    visibleDays: SUN,
     products: [
       { en: "Black Tea", sr: "Crni caj" },
       { en: "Rooibos", sr: "Rooibos" },
@@ -168,6 +182,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Matcha",
     type: "numeric",
     unit: "g",
+    visibleDays: DAILY,
     products: [
       { en: "Matcha", sr: "Matcha" },
       { en: "Blue Matcha", sr: "Plava matcha" },
@@ -178,6 +193,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Voce",
     type: "numeric",
     unit: "g",
+    visibleDays: DAILY,
     products: [
       { en: "Oranges", sr: "Narandze" },
       { en: "Lime", sr: "Lime" },
@@ -188,6 +204,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Sastojci",
     type: "numeric",
     unit: "g",
+    visibleDays: SUN,
     products: [
       { en: "Cocoa", sr: "Kakao" },
       { en: "Cinnamon", sr: "Cimet" },
@@ -209,6 +226,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Pire i sirupi",
     type: "numeric",
     unit: "ml",
+    visibleDays: DAILY,
     products: [
       { en: "Banana Puree", sr: "Pire banana" },
       { en: "Blueberry Puree", sr: "Pire borovnica" },
@@ -238,6 +256,7 @@ const seedData: SeedCategory[] = [
     nameSr: "Merch",
     type: "numeric",
     unit: "kom",
+    visibleDays: SUN,
     products: [
       { en: "Blue T-Shirt", sr: "Plava majica" },
       { en: "White T-Shirt", sr: "Bela majica" },
@@ -271,12 +290,23 @@ async function seed() {
   for (const cat of seedData) {
     const [inserted] = await db
       .insert(categoriesTable)
-      .values({ nameEn: cat.nameEn, nameSr: cat.nameSr })
+      .values({ nameEn: cat.nameEn, nameSr: cat.nameSr, visibleDays: cat.visibleDays })
       .onConflictDoNothing()
       .returning();
 
     if (!inserted) {
-      console.log(`  ⚠️  Category "${cat.nameSr}" already exists, skipping`);
+      const existing = await db
+        .select()
+        .from(categoriesTable)
+        .where(eq(categoriesTable.nameSr, cat.nameSr))
+        .limit(1);
+      if (existing[0]) {
+        await db
+          .update(categoriesTable)
+          .set({ visibleDays: cat.visibleDays })
+          .where(eq(categoriesTable.id, existing[0].id));
+      }
+      console.log(`  ⚠️  Category "${cat.nameSr}" already exists, updated schedule`);
       continue;
     }
 

@@ -3,6 +3,7 @@ export type WaitingStep =
   | { type: "numeric_then_color"; sessionId: number; productId: number; productName: string; unit: string; messageId: number; chatId: number }
   | { type: "admin_cat_name_en"; messageId: number; chatId: number }
   | { type: "admin_cat_name_sr"; nameEn: string; messageId: number; chatId: number }
+  | { type: "admin_cat_choose_schedule"; nameEn: string; nameSr: string; messageId: number; chatId: number }
   | { type: "admin_prod_name_en"; categoryId: number; messageId: number; chatId: number }
   | { type: "admin_prod_name_sr"; categoryId: number; nameEn: string; messageId: number; chatId: number }
   | { type: "admin_prod_choose_type"; categoryId: number; nameEn: string; nameSr: string; messageId: number; chatId: number }

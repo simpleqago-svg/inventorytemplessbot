@@ -13,6 +13,7 @@ import {
   editProductTypeCategoryKeyboard,
   editProductTypeProductKeyboard,
   editTypeKeyboard,
+  categoryScheduleKeyboard,
 } from "../keyboards.js";
 import {
   getUser,
@@ -116,6 +117,34 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       await ctx.answerCbQuery();
     } catch (err) {
       logger.error({ err }, "admin:cat_pick error");
+    }
+  });
+
+  bot.action(/^admin:schedule:(daily|thu|sun|thu_sun)$/, async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+      const user = await getUser(userId);
+      const lang = getLang(user?.lang);
+      const key = ctx.match[1] as "daily" | "thu" | "sun" | "thu_sun";
+      const waiting = getWaiting(userId);
+      if (!waiting || waiting.type !== "admin_cat_choose_schedule") {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const visibleDays: number[] =
+        key === "daily" ? [] :
+        key === "thu" ? [4] :
+        key === "sun" ? [0] :
+        [4, 0];
+      await addCategory(waiting.nameEn, waiting.nameSr, visibleDays);
+      clearWaiting(userId);
+      await ctx.editMessageText(t[lang].categorySaved, {
+        reply_markup: settingsKeyboard(lang),
+      });
+      await ctx.answerCbQuery();
+    } catch (err) {
+      logger.error({ err }, "admin:schedule error");
     }
   });
 
@@ -423,9 +452,14 @@ export async function handleAdminText(
       return true;
     }
     case "admin_cat_name_sr": {
-      await addCategory(waiting.nameEn, text);
-      clearWaiting(userId);
-      await edit(t[lang].categorySaved, { reply_markup: settingsKeyboard(lang) });
+      setWaiting(userId, {
+        type: "admin_cat_choose_schedule",
+        nameEn: waiting.nameEn,
+        nameSr: text,
+        messageId: waiting.messageId,
+        chatId: waiting.chatId,
+      });
+      await edit(t[lang].chooseSchedule, { reply_markup: categoryScheduleKeyboard(lang) });
       return true;
     }
     case "admin_prod_name_en": {

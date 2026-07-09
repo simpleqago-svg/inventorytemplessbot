@@ -206,6 +206,18 @@ export function adminCategoryKeyboard(categories: Category[], lang: Lang = "sr")
   };
 }
 
+export function categoryScheduleKeyboard(lang: Lang): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [{ text: t[lang].scheduleDaily, callback_data: "admin:schedule:daily" }],
+      [{ text: t[lang].scheduleThu, callback_data: "admin:schedule:thu" }],
+      [{ text: t[lang].scheduleSun, callback_data: "admin:schedule:sun" }],
+      [{ text: t[lang].scheduleThuSun, callback_data: "admin:schedule:thu_sun" }],
+      [{ text: t[lang].cancelAdmin, callback_data: "admin:cancel" }],
+    ],
+  };
+}
+
 export function adminTypeKeyboard(lang: Lang): InlineKeyboardMarkup {
   return {
     inline_keyboard: [

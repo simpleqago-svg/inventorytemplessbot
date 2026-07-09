@@ -69,6 +69,11 @@ export const t = {
     deleteNo: "❌ No, cancel",
     chooseProductToDelete: "Choose a product to delete:",
     chooseProductToEdit: "Choose a product to edit:",
+    chooseSchedule: "When should this category be shown?",
+    scheduleDaily: "📅 Every day",
+    scheduleThu: "📅 Thursday only",
+    scheduleSun: "📅 Sunday only",
+    scheduleThuSun: "📅 Thursday + Sunday",
   },
   sr: {
     chooseLanguage: "Izaberite jezik:",
@@ -138,6 +143,11 @@ export const t = {
     deleteNo: "❌ Ne, otkaži",
     chooseProductToDelete: "Izaberite poziciju za brisanje:",
     chooseProductToEdit: "Izaberite poziciju za izmenu:",
+    chooseSchedule: "Kada treba prikazati ovu kategoriju?",
+    scheduleDaily: "📅 Svaki dan",
+    scheduleThu: "📅 Samo četvrtak",
+    scheduleSun: "📅 Samo nedelja",
+    scheduleThuSun: "📅 Četvrtak + Nedelja",
   },
 } as const;
 

@@ -81,6 +81,15 @@ export async function getCategories(): Promise<Category[]> {
   return db.select().from(categoriesTable);
 }
 
+export async function getVisibleCategories(date: Date = new Date()): Promise<Category[]> {
+  const day = date.getDay(); // 0 = Sunday .. 6 = Saturday
+  const all = await db.select().from(categoriesTable);
+  return all.filter((c) => {
+    if (!c.visibleDays || c.visibleDays.length === 0) return true;
+    return c.visibleDays.includes(day);
+  });
+}
+
 export async function getProductsByCategory(
   categoryId: number
 ): Promise<Product[]> {
@@ -201,11 +210,12 @@ export async function closeSession(sessionId: number): Promise<void> {
 
 export async function addCategory(
   nameEn: string,
-  nameSr: string
+  nameSr: string,
+  visibleDays: number[] = []
 ): Promise<Category> {
   const [cat] = await db
     .insert(categoriesTable)
-    .values({ nameEn, nameSr })
+    .values({ nameEn, nameSr, visibleDays })
     .returning();
   return cat!;
 }

@@ -12,7 +12,7 @@ import {
   setUserLang,
   getUser,
   getLocations,
-  getCategories,
+  getVisibleCategories,
   getOrCreateSession,
   getLocationById,
   getActiveSessionLocation,
@@ -44,7 +44,7 @@ export async function goToCategories(
 
   userLocation.set(userId, locationId);
   const session = await getOrCreateSession(userId, locationId);
-  const categories = await getCategories();
+  const categories = await getVisibleCategories();
   const stats = await getCategoryStats(session.id);
   const locationName = lang === "sr" ? location.nameSr : location.nameEn;
   const text = t[lang].mainMenu(locationName);

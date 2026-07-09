@@ -43,6 +43,9 @@ export const categoriesTable = pgTable("categories", {
   id: serial("id").primaryKey(),
   nameEn: text("name_en").notNull(),
   nameSr: text("name_sr").notNull(),
+  // Days of week (0=Sun..6=Sat) on which this category is shown, in addition
+  // to being always visible. Empty/null array = shown every day.
+  visibleDays: integer("visible_days").array().notNull().default([]),
 });
 
 export const productsTable = pgTable("products", {
