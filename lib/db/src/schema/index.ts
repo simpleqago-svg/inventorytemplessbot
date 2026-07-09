@@ -8,6 +8,7 @@ import {
   timestamp,
   pgEnum,
   bigint,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const langEnum = pgEnum("lang", ["en", "sr"]);
@@ -33,31 +34,43 @@ export const usersTable = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
 });
 
-export const locationsTable = pgTable("locations", {
-  id: serial("id").primaryKey(),
-  nameEn: text("name_en").notNull(),
-  nameSr: text("name_sr").notNull(),
-});
+export const locationsTable = pgTable(
+  "locations",
+  {
+    id: serial("id").primaryKey(),
+    nameEn: text("name_en").notNull(),
+    nameSr: text("name_sr").notNull(),
+  },
+  (table) => [unique().on(table.nameSr)]
+);
 
-export const categoriesTable = pgTable("categories", {
-  id: serial("id").primaryKey(),
-  nameEn: text("name_en").notNull(),
-  nameSr: text("name_sr").notNull(),
-  // Days of week (0=Sun..6=Sat) on which this category is shown, in addition
-  // to being always visible. Empty/null array = shown every day.
-  visibleDays: integer("visible_days").array().notNull().default([]),
-});
+export const categoriesTable = pgTable(
+  "categories",
+  {
+    id: serial("id").primaryKey(),
+    nameEn: text("name_en").notNull(),
+    nameSr: text("name_sr").notNull(),
+    // Days of week (0=Sun..6=Sat) on which this category is shown, in addition
+    // to being always visible. Empty/null array = shown every day.
+    visibleDays: integer("visible_days").array().notNull().default([]),
+  },
+  (table) => [unique().on(table.nameSr)]
+);
 
-export const productsTable = pgTable("products", {
-  id: serial("id").primaryKey(),
-  categoryId: integer("category_id")
-    .notNull()
-    .references(() => categoriesTable.id),
-  nameEn: text("name_en").notNull(),
-  nameSr: text("name_sr").notNull(),
-  measurementType: measurementTypeEnum("measurement_type").notNull(),
-  unit: text("unit"),
-});
+export const productsTable = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    categoryId: integer("category_id")
+      .notNull()
+      .references(() => categoriesTable.id),
+    nameEn: text("name_en").notNull(),
+    nameSr: text("name_sr").notNull(),
+    measurementType: measurementTypeEnum("measurement_type").notNull(),
+    unit: text("unit"),
+  },
+  (table) => [unique().on(table.categoryId, table.nameSr)]
+);
 
 export const activeSessionsTable = pgTable("active_sessions", {
   id: serial("id").primaryKey(),
